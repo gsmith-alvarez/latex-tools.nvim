@@ -7,8 +7,8 @@
 local M = {}
 
 --- Register all LaTeX math snippets with LuaSnip
---- @param _config table Reserved for future use
-function M.register(_config)
+--- @param config table Plugin configuration
+function M.register(config)
   local ls = require 'luasnip'
   local s = ls.snippet
   local sn = ls.snippet_node
@@ -126,13 +126,26 @@ function M.register(_config)
     end
   end
 
+  -- mk and dm: plain text → math entry (markdown-only, not added to auto_snippets)
+  local is_plain_text = context.is_plain_text
+  local mk_snippet = s(
+    { trig = config.snippets.triggers.inline_math, wordTrig = false,
+      snippetType = 'autosnippet', condition = is_plain_text },
+    fmt('${}$', { i(1) })
+  )
+  local dm_snippet = s(
+    { trig = config.snippets.triggers.display_math, wordTrig = true,
+      snippetType = 'autosnippet', condition = is_plain_text },
+    fmt('$$\n{}\n$$', { i(1) })
+  )
+
   -- ==========================================================================
   -- AUTOSNIPPETS (all with condition = in_mathzone or in_matrix_env)
   -- ==========================================================================
   local auto_snippets = {
     -- beg: mA (math, auto, no word boundary)
     s(
-      { trig = 'beg', wordTrig = false, condition = in_mathzone },
+      { trig = config.snippets.triggers.begin_env, wordTrig = false, condition = in_mathzone },
       fmt(
         [[\begin{{{}}}
 {}
@@ -347,7 +360,7 @@ function M.register(_config)
     -- ── MATRIX SHORTCUTS ( mA ) ──────────────────────────────────────────────────
     -- Matrix column separator: use double-comma to insert ' & '.
     -- Single comma should remain a literal comma; do not autosnippet it.
-    s({ trig = ',,', wordTrig = false, snippetType = 'autosnippet', condition = in_matrix_env, priority = 2000 }, t(' & ')),
+    s({ trig = config.snippets.triggers.matrix_column, wordTrig = false, snippetType = 'autosnippet', condition = in_matrix_env, priority = 2000 }, t(' & ')),
 
     -- ── ENVIRONMENTS ( mA ) ──────────────────────────────────────────────────────
     s({ trig = 'pmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{pmatrix}}\n{}\n\\end{{pmatrix}}', { i(1) })),
@@ -684,11 +697,55 @@ function M.register(_config)
     ),
   }
 
-  -- Register for markdown and tex filetypes
-  ls.add_snippets('markdown', auto_snippets, { key = 'latex-tools-auto', type = 'autosnippets' })
-  ls.add_snippets('markdown', regular_snippets, { key = 'latex-tools-regular' })
-  ls.add_snippets('tex', auto_snippets, { key = 'latex-tools-tex-auto', type = 'autosnippets' })
-  ls.add_snippets('tex', regular_snippets, { key = 'latex-tools-tex-regular' })
+  -- ============================================================================
+  -- PIPELINE: overrides → disable → extra
+  -- ============================================================================
+  local function apply_pipeline(snip_list)
+    local overrides = config.snippets.overrides or {}
+    local disable_set = {}
+    for _, trig in ipairs(config.snippets.disable or {}) do
+      disable_set[trig] = true
+    end
+
+    -- Step 1: apply overrides (mutate trigger fields in-place)
+    for _, snip in ipairs(snip_list) do
+      local trig = snip.trigger
+      if trig and overrides[trig] then
+        local ov = overrides[trig]
+        if ov.trig     ~= nil then snip.trigger  = ov.trig     end
+        if ov.wordTrig ~= nil then snip.wordTrig = ov.wordTrig end
+        if ov.regTrig  ~= nil then snip.regTrig  = ov.regTrig  end
+      end
+    end
+
+    -- Step 2: filter disabled snippets
+    local filtered = {}
+    for _, snip in ipairs(snip_list) do
+      if not disable_set[snip.trigger] then
+        table.insert(filtered, snip)
+      end
+    end
+
+    -- Step 3: append extra (user-supplied raw LuaSnip objects)
+    for _, snip in ipairs(config.snippets.extra or {}) do
+      table.insert(filtered, snip)
+    end
+
+    return filtered
+  end
+
+  -- Apply pipeline (overrides → disable → extra) to both tables
+  local processed_auto = apply_pipeline(auto_snippets)
+  local processed_regular = apply_pipeline(regular_snippets)
+
+  -- mk and dm are markdown-only (plain text condition, not math zone)
+  -- They are not in auto_snippets (which goes to tex too) so skip pipeline for them
+  ls.add_snippets('markdown', { mk_snippet, dm_snippet }, { key = 'latex-tools-md-entry', type = 'autosnippets' })
+
+  ls.add_snippets('markdown', processed_auto,    { key = 'latex-tools-auto',     type = 'autosnippets' })
+  ls.add_snippets('markdown', processed_regular, { key = 'latex-tools-regular' })
+  ls.add_snippets('tex',      processed_auto,    { key = 'latex-tools-tex-auto', type = 'autosnippets' })
+  ls.add_snippets('tex',      processed_regular, { key = 'latex-tools-tex-regular' })
 end
 
 return M
