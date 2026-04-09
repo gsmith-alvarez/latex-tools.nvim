@@ -138,4 +138,48 @@ T['context']['is_in_matrix_env true in markdown display math matrix'] = function
   vim.api.nvim_buf_delete(buf, { force = true })
 end
 
+T['context']['is_in_code_block returns false outside code block'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Hello world' })
+  vim.api.nvim_win_set_cursor(0, { 1, 5 })
+  MiniTest.expect.equality(ctx.is_in_code_block(), false)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_code_block returns true inside fenced code block'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '```lua', 'x = 1', '```' })
+  vim.api.nvim_win_set_cursor(0, { 2, 3 })
+  MiniTest.expect.equality(ctx.is_in_code_block(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_plain_text returns true in plain markdown text'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Hello world' })
+  vim.api.nvim_win_set_cursor(0, { 1, 5 })
+  MiniTest.expect.equality(ctx.is_plain_text(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_plain_text returns false inside math zone'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Text $x + y$ more' })
+  vim.api.nvim_win_set_cursor(0, { 1, 8 })
+  MiniTest.expect.equality(ctx.is_plain_text(), false)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
 return T

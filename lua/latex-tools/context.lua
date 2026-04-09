@@ -63,6 +63,41 @@ function M.is_in_matrix_env()
   return M._scan_matrix_env()
 end
 
+--- Check if cursor is in a fenced code block.
+--- Tries snippets.utils.in_code_block() via pcall first (dotfiles integration),
+--- then falls back to a simple line scanner.
+--- @return boolean
+function M.is_in_code_block()
+  -- Try dotfiles integration first; only trust an affirmative (true) result.
+  -- A false from the dotfiles may mean Treesitter wasn't available, so we
+  -- always fall through to our own line scanner when the result is false.
+  local ok, snip_utils = pcall(require, 'snippets.utils')
+  if ok and type(snip_utils.in_code_block) == 'function' then
+    local result = snip_utils.in_code_block()
+    if result == true then return true end
+  end
+
+  -- Fallback: scan from buffer start to cursor for unmatched ``` fences
+  local bufnr = vim.api.nvim_get_current_buf()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local row = pos[1] - 1  -- 0-indexed
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, row, false)
+  local in_block = false
+  for _, line in ipairs(lines) do
+    if line:match('^```') then
+      in_block = not in_block
+    end
+  end
+  return in_block
+end
+
+--- Check if cursor is in plain text (not in a math zone, not in a code block).
+--- @return boolean
+function M.is_plain_text()
+  return not M.is_in_mathzone() and not M.is_in_code_block()
+end
+
 -- =============================================================================
 -- INTERNAL: TREESITTER PATH
 -- =============================================================================
