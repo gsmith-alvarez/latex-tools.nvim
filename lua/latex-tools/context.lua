@@ -16,6 +16,11 @@ local TS_MATH_NODES = {
   inline_formula = true,
   math = true,
   inline_math = true,
+  -- Additional names used by various grammar/parser versions
+  math_block = true,
+  math_span = true,
+  dollar_math = true,
+  inline_math_env = true,
 }
 
 --- Text commands that escape back to text mode inside LaTeX math.
@@ -121,8 +126,16 @@ function M._check_mathzone_treesitter()
   while node do
     local ntype = node:type()
 
-    -- \text{} / \textbf{} etc. explicitly escape back to text mode
-    if ntype == 'text_mode' then return false end
+    -- \text{} / \textbf{} etc. explicitly escape back to text mode.
+    -- In .tex/.latex, text_mode is a real \text{} escape inside math — not math.
+    -- In markdown, text_mode may be the LaTeX injection root (not an explicit
+    -- escape), so we return nil to let the fallback line scanner decide instead
+    -- of incorrectly blocking it with false.
+    if ntype == 'text_mode' then
+      local ft = vim.bo.filetype
+      if ft == 'tex' or ft == 'latex' then return false end
+      return nil
+    end
 
     -- Some parsers expose \text{...} as generic_command / command nodes
     if ntype == 'generic_command' or ntype == 'command' then
