@@ -93,4 +93,49 @@ T['context']['is_in_matrix_env returns false after end environment'] = function(
   vim.api.nvim_buf_delete(buf, { force = true })
 end
 
+T['context']['is_in_mathzone returns true inside display math'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    '$$',
+    'x + y = z',
+    '$$',
+  })
+  vim.api.nvim_win_set_cursor(0, { 2, 4 })  -- inside display math
+  MiniTest.expect.equality(ctx.is_in_mathzone(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_mathzone ignores escaped dollar signs'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Cost: \\$50 and \\$100' })
+  vim.api.nvim_win_set_cursor(0, { 1, 12 })  -- between the two \$
+  MiniTest.expect.equality(ctx.is_in_mathzone(), false)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_matrix_env true in markdown display math matrix'] = function()
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    '$$',
+    '\\begin{pmatrix}',
+    'a & b',
+    '\\end{pmatrix}',
+    '$$',
+  })
+  vim.api.nvim_win_set_cursor(0, { 3, 2 })  -- inside pmatrix inside $$
+  local in_mat, env = ctx.is_in_matrix_env()
+  MiniTest.expect.equality(in_mat, true)
+  MiniTest.expect.equality(env, 'pmatrix')
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
 return T

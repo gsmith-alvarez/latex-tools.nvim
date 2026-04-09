@@ -41,9 +41,10 @@ local MATRIX_ENVS = {
 -- =============================================================================
 
 --- Check if cursor is in a math zone.
---- For tex/latex filetypes: always returns true (entire file is math-capable).
---- For markdown filetypes:  tries treesitter, falls back to line scanner.
---- For all other filetypes: returns false.
+--- For tex/latex: always returns true (entire file is considered math-capable).
+--- Known limitation: \text{...} escapes inside .tex files are not detected;
+---   snippets may fire inside \text{} in .tex files.
+--- For markdown*: uses Treesitter + fallback line scanner.
 --- @return boolean
 function M.is_in_mathzone()
   local ft = vim.bo.filetype
@@ -179,9 +180,9 @@ end
 -- INTERNAL: MATRIX ENV SCANNER
 -- =============================================================================
 
---- Scan all text from buffer start up to (and including) cursor position,
---- building a stack of open \begin{env}...\end{env} pairs.
---- Returns the innermost open environment if it is a known matrix env.
+--- Scan buffer from start to cursor for open \begin{env} with no matching \end{env}.
+--- Known limitation: mismatched \end{env} (wrong env name) is silently discarded,
+---   not unwound. May produce wrong results on partially-formed LaTeX.
 --- @return boolean in_matrix
 --- @return string|nil env_name
 function M._scan_matrix_env()
