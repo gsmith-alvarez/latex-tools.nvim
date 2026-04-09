@@ -174,8 +174,13 @@ function M._check_mathzone_fallback()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, row + 1, false)
   if #lines == 0 then return false end
 
-  -- Truncate last line to cursor position (col is 0-indexed; sub is 1-indexed)
-  lines[#lines] = lines[#lines]:sub(1, col + 1)
+  -- Truncate last line to just BEFORE the cursor position.
+  -- In insert mode the cursor sits on the closing delimiter (e.g. the
+  -- closing $ of $...$).  Including that character would toggle the math
+  -- state back off, giving a false negative.  Using col (not col+1)
+  -- excludes the character at the cursor and scans only text that has
+  -- already been typed.
+  lines[#lines] = lines[#lines]:sub(1, col)
 
   local display_math = false
   local inline_math = false

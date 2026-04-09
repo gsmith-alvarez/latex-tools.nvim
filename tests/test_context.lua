@@ -24,6 +24,19 @@ T['context']['is_in_mathzone returns true inside inline math'] = function()
   vim.api.nvim_buf_delete(buf, { force = true })
 end
 
+T['context']['is_in_mathzone returns true at closing $ (insert mode position)'] = function()
+  -- When mk expands to $|$ and user types "int", buffer is "$int$"
+  -- with cursor at col=4 (the closing $). This simulates insert mode.
+  local ctx = require 'latex-tools.context'
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '$int$' })
+  vim.api.nvim_win_set_cursor(0, { 1, 4 })  -- cursor ON the closing $
+  MiniTest.expect.equality(ctx.is_in_mathzone(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
 T['context']['is_in_mathzone returns true for tex filetype'] = function()
   local ctx = require 'latex-tools.context'
   local buf = vim.api.nvim_create_buf(true, false)
