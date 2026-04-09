@@ -28,19 +28,20 @@ function M.register(config)
   -- This must happen before any s() calls, because LuaSnip bakes the trigger
   -- into the trig_matcher closure at construction time.
   -- ============================================================================
-  local trig_overrides = {}
-  for orig, ov in pairs(config.snippets.overrides or {}) do
-    if ov.trig ~= nil then
-      trig_overrides[orig] = ov.trig
-    end
-  end
+  local snippet_overrides = config.snippets.overrides or {}
 
   -- Wrapper around s() that applies trigger overrides at construction time.
-  -- Usage: same as s(), but if config.snippets.overrides has an entry for this
-  -- snippet's trigger, the override is applied before LuaSnip compiles it.
+  -- Supports trig, wordTrig, and regTrig fields from config.snippets.overrides.
+  -- Usage: same as s(). If config.snippets.overrides has an entry for this
+  -- snippet's trigger, the override fields are merged before LuaSnip compiles it.
   local function sa(spec, ...)
-    if trig_overrides[spec.trig] then
-      spec = vim.tbl_extend('force', spec, { trig = trig_overrides[spec.trig] })
+    local ov = snippet_overrides[spec.trig]
+    if ov then
+      local patch = {}
+      if ov.trig     ~= nil then patch.trig     = ov.trig     end
+      if ov.wordTrig ~= nil then patch.wordTrig = ov.wordTrig end
+      if ov.regTrig  ~= nil then patch.regTrig  = ov.regTrig  end
+      spec = vim.tbl_extend('force', spec, patch)
     end
     return s(spec, ...)
   end
