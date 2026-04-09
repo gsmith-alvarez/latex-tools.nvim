@@ -216,11 +216,16 @@ end
 -- INTERNAL: MARKDOWN MATH CHECK
 -- =============================================================================
 
---- Try treesitter first; fall back to line scanner on nil result.
+--- Try treesitter first; fall back to line scanner unless TS returns true.
+--- In markdown, we only trust TS's positive result (true = definitely in math).
+--- For nil (inconclusive) OR false (heuristic match like \text{} which can
+--- fire on unrelated node text in injected LaTeX), we always defer to the
+--- fallback line scanner, which is authoritative for markdown math zones.
 --- @return boolean
 function M._check_mathzone_markdown()
   local ts_result = M._check_mathzone_treesitter()
-  if ts_result ~= nil then return ts_result end
+  if ts_result == true then return true end
+  -- false or nil: fallback is authoritative in markdown
   return M._check_mathzone_fallback()
 end
 
