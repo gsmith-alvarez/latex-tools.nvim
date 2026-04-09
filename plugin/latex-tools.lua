@@ -1,0 +1,2 @@
+-- latex-tools.nvim/plugin/latex-tools.lua
+-- No auto-setup. User calls require('latex-tools').setup() explicitly.
