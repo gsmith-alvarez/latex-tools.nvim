@@ -46,7 +46,7 @@ With default config, these snippets fire automatically:
 | Plain text | `dm` | `$$\n\|\n$$` (display math) |
 | Math zone | `beg` | `\begin{|}\n\n\end{|}` |
 | Math zone | `@a` | `\alpha` |
-| Math zone | `//` | `\frac{|}{|}` (smart fraction) |
+| Math zone | `/` | `\frac{expr}{|}` (smart fraction — wraps preceding expr) |
 | Math zone | `xhat` | `\hat{x}` (smart postfix) |
 | Matrix env | `,,` | ` & ` (column separator) |
 
@@ -65,6 +65,24 @@ require('latex-tools').setup({
       display_math  = 'dm',   -- plain text → $$...$$
       begin_env     = 'beg',  -- math zone → \begin{...}
       matrix_column = ',,',   -- matrix env → ' & '
+    },
+
+    -- (reserved for future use — category filtering not yet implemented)
+    categories = {
+      greek_letters = true,
+      operators = true,
+      symbols = true,
+      arrows = true,
+      sets_logic = true,
+      decorators = true,
+      integrals_derivatives = true,
+      physics = true,
+      chemistry = true,
+      matrices = true,
+      environments = true,
+      brackets = true,
+      sequences_series = true,
+      trig_functions = true,
     },
 
     -- Remap trigger strings for any built-in snippet.
@@ -136,7 +154,10 @@ Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) 
 | `Vmat` | `\begin{Vmatrix}\n\|\n\end{Vmatrix}` |
 | `matrix` | `\begin{matrix}\n\|\n\end{matrix}` |
 | `cases` | `\begin{cases}\n\|\n\end{cases}` |
-| `ali` | `\begin{align}\n\|\n\end{align}` |
+| `align` | `\begin{align}\n\|\n\end{align}` |
+| `array` | `\begin{array}\n\|\n\end{array}` |
+| `text` | `\text{|}|` |
+| `'` | `\text{|}|` (shorthand for `text`) |
 
 ### Greek Letters (math zone)
 
@@ -147,35 +168,41 @@ Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) 
 | `@d` | `\delta` | `@D` | `\Delta` |
 | `@e` | `\epsilon` | `:e` | `\varepsilon` |
 | `@z` | `\zeta` | `@h` | `\eta` |
-| `@q` | `\theta` | `@Q` | `\Theta` |
-| `:q` | `\vartheta` | `@i` | `\iota` |
+| `@t` | `\theta` | `@T` | `\Theta` |
+| `:t` | `\vartheta` | `@i` | `\iota` |
 | `@k` | `\kappa` | `@l` | `\lambda` |
 | `@L` | `\Lambda` | `@m` | `\mu` |
 | `@n` | `\nu` | `@x` | `\xi` |
 | `@X` | `\Xi` | `@p` | `\pi` |
-| `@P` | `\Pi` | `:p` | `\varpi` |
-| `@r` | `\rho` | `:r` | `\varrho` |
-| `@s` | `\sigma` | `@S` | `\Sigma` |
-| `:s` | `\varsigma` | `@t` | `\tau` |
-| `@u` | `\upsilon` | `@U` | `\Upsilon` |
-| `@f` | `\phi` | `@F` | `\Phi` |
-| `:f` | `\varphi` | `@c` | `\chi` |
+| `@r` | `\rho` | `@s` | `\sigma` |
+| `@S` | `\Sigma` | `@u` | `\upsilon` |
+| `@U` | `\Upsilon` | `@f` | `\phi` |
+| `@F` | `\Phi` | `:f` | `\varphi` |
 | `@y` | `\psi` | `@Y` | `\Psi` |
-| `@w` | `\omega` | `@W` | `\Omega` |
+| `@o` | `\omega` | `@O` | `\Omega` |
+| `ome` | `\omega` | `Ome` | `\Omega` |
 
 ### Operators (math zone)
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `//` | `\frac{|}{|}` | Smart: wraps preceding expr |
+| `/` | `\frac{expr}{|}` | Smart: wraps preceding expr as numerator |
+| `//` | `\frac{|}{|}` | Plain fraction (fill both manually) |
 | `sr` | `^{2}` | Square |
 | `cb` | `^{3}` | Cube |
 | `rd` | `^{|}` | General superscript |
-| `__` | `_{|}` | Subscript |
+| `us` | `_{|}` | Subscript |
+| `sts` | `_\text{|}` | Text subscript |
 | `invs` | `^{-1}` | Inverse |
-| `compl` | `^{c}` | Complement |
-| `td` | `^{|}` | Power |
-| `sq` | `\sqrt{|}` | Square root |
+| `conj` | `^{*}` | Conjugate |
+| `sq` | `\sqrt{| |}` | Square root |
+| `nsq` | `\sqrt[|]{|}` | nth root |
+| `ee` | `e^{ | }` | Exponential |
+| `bf` | `\mathbf{|}` | Bold |
+| `rm` | `\mathrm{|}` | Roman |
+| `Re` | `\mathrm{Re}` | Real part |
+| `Im` | `\mathrm{Im}` | Imaginary part |
+| `trace` | `\mathrm{Tr}` | Trace |
 
 ### Decorators / Postfix (math zone)
 
@@ -184,39 +211,44 @@ These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
 | Trigger | Output |
 |---------|--------|
 | `hat` | `\hat{...}` |
-| `bar` | `\overline{...}` |
+| `bar` | `\bar{...}` |
 | `dot` | `\dot{...}` |
 | `ddot` | `\ddot{...}` |
 | `tilde` | `\tilde{...}` |
 | `und` | `\underline{...}` |
 | `vec` | `\vec{...}` |
+| `deco` | choice menu: hat/bar/dot/ddot/tilde/vec/underline |
 
-### Auto-subscript / Superscript (math zone)
+### Auto-subscript (math zone)
+
+These are regex autosnippets — they fire automatically as you type.
 
 | Pattern | Example | Output |
 |---------|---------|--------|
-| `letter digit` | `x2` | `x_{2}` |
-| `letter letter digit` | `xa2` | `xa_{2}` (subscript on 2-char var) |
-| `letter^digit` | `x^2` → auto | `x^{2}` |
+| `([A-Za-z])(%d)` | `x2` | `x_{2}` |
+| `([A-Za-z])_(%d%d)` | `x_12` | `x_{12}` (two-digit subscript) |
 
 ### Symbols (math zone)
 
 | Trigger | Output | Trigger | Output |
 |---------|--------|---------|--------|
 | `ooo` | `\infty` | `sum` | `\sum` |
-| `prod` | `\prod` | `lim` | `\lim` |
-| `pm` | `\pm` | `mp` | `\mp` |
-| `...` | `\ldots` | `c..` | `\cdots` |
-| `::` | `\vdots` | `::` | `\ddots` |
-| `xx` | `\times` | `**` | `\cdot` |
-| `norm` | `\|...\|` | `abs` | `\|...\|` |
-| `inn` | `\in` | `notin` | `\notin` |
-| `\\\\` | `\setminus` | `sub` | `\subset` |
-| `sube` | `\subseteq` | `sup` | `\supset` |
-| `supe` | `\supseteq` | `EE` | `\exists` |
-| `AA` | `\forall` | `!>` | `\mapsto` |
-| `->` | `\to` | `=>` | `\implies` |
-| `=<` | `\impliedby` | `iff` | `\iff` |
+| `prod` | `\prod` | `xx` | `\times` |
+| `+-` | `\pm` | `-+` | `\mp` |
+| `...` | `\dots` | `**` | `\cdot ` |
+| `nabl` | `\nabla` | `del` | `\nabla` |
+| `para` | `\parallel` | `===` | `\equiv` |
+| `!=` | `\neq` | `>=` | `\geq` |
+| `<=` | `\leq` | `>>` | `\gg` |
+| `<<` | `\ll` | `simm` | `\sim` |
+| `sim=` | `\simeq` | `prop` | `\propto` |
+| `~~` | `\approx` | `norm` | `\lvert...\rvert` |
+| `Norm` | `\lVert...\rVert` | `avg` | `\langle...\rangle` |
+| `ceil` | `\lceil...\rceil` | `floor` | `\lfloor...\rfloor` |
+| `mod` | `\|...\|` | `inn` | `\in` |
+| `notin` | `\not\in` | `dag` | `^\dagger` |
+| `o+` | `\oplus` | `ox` | `\otimes` |
+| `cdot` | `\cdot` | | |
 
 ### Sets / Logic (math zone)
 
@@ -224,10 +256,17 @@ These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
 |---------|--------|---------|--------|
 | `NN` | `\mathbb{N}` | `ZZ` | `\mathbb{Z}` |
 | `QQ` | `\mathbb{Q}` | `RR` | `\mathbb{R}` |
-| `CC` | `\mathbb{C}` | `FF` | `\mathbb{F}` |
-| `HH` | `\mathbb{H}` | `OO` | `\emptyset` |
-| `UU` | `\cup` | `IU` | `\bigcup` |
-| `NN` | `\cap` | `IN` | `\bigcap` |
+| `CC` | `\mathbb{C}` | `LL` | `\mathcal{L}` |
+| `HH` | `\mathcal{H}` | `eset` | `\emptyset` |
+| `and` | `\cap` | `orr` | `\cup` |
+| `inn` | `\in` | `notin` | `\not\in` |
+| `sub=` | `\subseteq` | `sup=` | `\supseteq` |
+| `set` | `\{ | \}` | `&&` | `\quad \land \quad` |
+| `neg` | `\neg` | `iff` | `\iff` |
+| `?fa` | `\forall |` | `?ex` | `\exists |` |
+| `?ue` | `\exists! |` | `?tf` | `\therefore |` |
+| `?be` | `\because |` | `?qed` | `\square` |
+| `?st` | `\text{ s.t. }` | | |
 
 ### Brackets (math zone)
 
@@ -235,10 +274,10 @@ These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
 |---------|--------|
 | `lr(` | `\left( \| \right)` |
 | `lr[` | `\left[ \| \right]` |
-| `lrv` | `\left\| \| \right\|` |
-| `lrn` | `\left\lVert \| \right\rVert` |
-| `lrb` | `\left\{ \| \right\}` |
+| `lr{` | `\left\{ \| \right\}` |
+| `lr\|` | `\left\| \| \right\|` |
 | `lra` | `\left< \| \right>` |
+| `brack` | choice menu: `()`, `[]`, `{}`, `<>`, `\|`, `\|\|` |
 
 ### Arrows (math zone)
 
@@ -246,57 +285,80 @@ These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
 |---------|--------|---------|--------|
 | `->` | `\to` | `!>` | `\mapsto` |
 | `=>` | `\implies` | `=<` | `\impliedby` |
-| `iff` | `\iff` | `upar` | `\uparrow` |
-| `dnar` | `\downarrow` | `<->` | `\leftrightarrow` |
+| `<->` | `\leftrightarrow` | | |
 
 ### Integrals / Derivatives (math zone)
 
-| Trigger | Output |
-|---------|--------|
-| `\int` | `\int \| \, d\|` |
-| `dint` | `\int_{|}^{|} \| \, d\|` |
-| `oint` | `\oint` |
-| `par` | `\frac{\partial \|}{\partial \|}` |
-| `pa([A-Za-z])([A-Za-z])` | `\frac{\partial #1}{\partial #2}` (regex) |
-| `\sum` | `\sum_{\|=\|}^{\|} \|` |
-| `\prod` | `\prod_{\|=\|}^{\|} \|` |
-| `\lim` | `\lim_{\| \to \|} \|` |
+| Trigger | Output | Notes |
+|---------|--------|-------|
+| `dint` | `\int_{|}^{|} | \, d| |` | Definite integral (auto) |
+| `oint` | `\oint` | Contour integral (auto) |
+| `oinf` | `\int_{0}^{\infty} | \, d| |` | Zero to infinity (auto) |
+| `infi` | `\int_{-\infty}^{\infty} | \, d| |` | Improper integral (auto) |
+| `iint` | `\iint` | Double integral (auto) |
+| `iiint` | `\iiint` | Triple integral (auto) |
+| `ddt` | `\frac{d}{dt} ` | Time derivative (auto) |
+| `par` | `\frac{ \partial | }{ \partial | } |` | Partial derivative (tab) |
+| `pa`_xy_ | `\frac{ \partial x }{ \partial y }` | Regex: `pa([A-Za-z])([A-Za-z])` (tab) |
+| `\int` | `\int | \, d| |` | Integral with measure (tab) |
+| `\sum` | `\sum_{|=|}^{|} |` | Sum with limits (tab) |
+| `\prod` | `\prod_{|=|}^{|} |` | Product with limits (tab) |
+| `lim` | `\lim_{ | \to | } |` | Limit (tab) |
 
 ### Physics (math zone)
 
 | Trigger | Output | Trigger | Output |
 |---------|--------|---------|--------|
-| `kbt` | `k_B T` | `hbar` | `\hbar` |
-| `bra` | `\bra{|}` | `ket` | `\ket{|}` |
-| `brk` | `\braket{\|\|}` | `outp` | `\ketbra{\|\|}` |
+| `kbt` | `k_{B}T` | `msun` | `M_{\odot}` |
+| `bra` | `\bra{|} |` | `ket` | `\ket{|} |` |
+| `brk` | `\braket{ | \| | } |` | `outer` | `\ket{|} \bra{|} |` |
 
 ### Chemistry (math zone)
 
-| Pattern | Example | Output |
-|---------|---------|--------|
-| `([A-Z][a-z]?)([0-9]+)` | `H2O` | `H_2O` (auto-subscript elements) |
-| Isotope pattern | `He iso` | `{}^{4}_{2}He` |
+| Trigger | Output | Notes |
+|---------|--------|-------|
+| `pu` | `\pu{ | }` | Physical units (`physics` package) |
+| `cee` | `\ce{ | }` | Chemical equation (`mhchem` package) |
+| `he4` | `{}^{4}_{2}He ` | Helium-4 isotope shorthand |
+| `he3` | `{}^{3}_{2}He ` | Helium-3 isotope shorthand |
+| `iso` | `{}^{|}_{|}| ` | Generic isotope template |
 
 ### Trig Functions (math zone)
+
+These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bare function name — they also prevent double-prefixing if a `\` is already present.
 
 | Trigger | Output | Trigger | Output |
 |---------|--------|---------|--------|
 | `sin` | `\sin` | `cos` | `\cos` |
 | `tan` | `\tan` | `csc` | `\csc` |
 | `sec` | `\sec` | `cot` | `\cot` |
-| `asin` | `\arcsin` | `acos` | `\arccos` |
-| `atan` | `\arctan` | `sinh` | `\sinh` |
-| `cosh` | `\cosh` | `tanh` | `\tanh` |
-| `ln` | `\ln` | `log` | `\log` |
-| `exp` | `\exp` | `perp` | `\perp` |
+| `arcsin` | `\arcsin` | `arccos` | `\arccos` |
+| `arctan` | `\arctan` | `ln` | `\ln` |
+| `log` | `\log` | `exp` | `\exp` |
+| `det` | `\det` | `int` | `\int` |
+
+> **Note:** `sinh`, `cosh`, and `tanh` are commented out in the source and do **not** expand.
 
 ### Sequences / Series (math zone)
 
 | Trigger | Output |
 |---------|--------|
-| `x1n` | `x_1, \ldots, x_n` |
-| `xin` | `x_i, \ldots, x_n` |
-| `x1N` | `x_1, \ldots, x_N` |
+| `seq` | `\{a_n\}_{n=1}^{\infty} |` (customisable) |
+| `sumn` | `sum_{n=1}^{\infty} |` |
+| `sumk` | `sum_{k=1}^{n} |` |
+| `limn` | `\lim_{n \to \infty} |` |
+| `limsup` | `\limsup_{n \to \infty} |` |
+| `liminf` | `\liminf_{n \to \infty} |` |
+| `geom` | `a \cdot r^{n-1} |` (geometric term) |
+| `arith` | `a + (n - 1)d |` (arithmetic term) |
+
+**Misc subscript shorthands:**
+
+| Trigger | Output | Trigger | Output |
+|---------|--------|---------|--------|
+| `xnn` | `x_{n}` | `xjj` | `x_{j}` |
+| `xp1` | `x_{n+1}` | `ynn` | `y_{n}` |
+| `yii` | `y_{i}` | `yjj` | `y_{j}` |
 
 ### Matrix Editing (matrix env)
 
@@ -313,7 +375,8 @@ require('latex-tools').setup({
   snippets = {
     overrides = {
       ['@a'] = { trig = 'ga' },   -- remap alpha: type 'ga' instead of '@a'
-      ['//'] = { trig = 'ff' },   -- remap smart fraction
+      ['//'] = { trig = 'ff' },   -- remap plain fraction (// → ff)
+      ['/'] = { trig = 'sf' },    -- remap smart fraction (/ → sf)
     },
   },
 })
