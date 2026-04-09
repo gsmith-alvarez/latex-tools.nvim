@@ -698,7 +698,7 @@ function M.register(config)
   }
 
   -- ============================================================================
-  -- PIPELINE: overrides → disable → extra
+  -- PIPELINE: overrides → disable
   -- ============================================================================
   local function apply_pipeline(snip_list)
     local overrides = config.snippets.overrides or {}
@@ -726,15 +726,10 @@ function M.register(config)
       end
     end
 
-    -- Step 3: append extra (user-supplied raw LuaSnip objects)
-    for _, snip in ipairs(config.snippets.extra or {}) do
-      table.insert(filtered, snip)
-    end
-
     return filtered
   end
 
-  -- Apply pipeline (overrides → disable → extra) to both tables
+  -- Apply pipeline (overrides → disable) to both tables
   local processed_auto = apply_pipeline(auto_snippets)
   local processed_regular = apply_pipeline(regular_snippets)
 
@@ -746,6 +741,13 @@ function M.register(config)
   ls.add_snippets('markdown', processed_regular, { key = 'latex-tools-regular' })
   ls.add_snippets('tex',      processed_auto,    { key = 'latex-tools-tex-auto', type = 'autosnippets' })
   ls.add_snippets('tex',      processed_regular, { key = 'latex-tools-tex-regular' })
+
+  -- User-supplied extra snippets (registered after built-ins, once each for both filetypes)
+  local extra = config.snippets.extra or {}
+  if #extra > 0 then
+    ls.add_snippets('markdown', extra, { key = 'latex-tools-extra' })
+    ls.add_snippets('tex',      extra, { key = 'latex-tools-tex-extra' })
+  end
 end
 
 return M
