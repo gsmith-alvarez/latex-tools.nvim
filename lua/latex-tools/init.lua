@@ -28,6 +28,17 @@ local defaults = {
       sequences_series = true,
       trig_functions = true,
     },
+    -- Remap trigger strings for built-in snippets.
+    -- Key: existing trigger string (exact, or raw Lua pattern for regTrig snippets).
+    -- Value: fields to replace — only trig/wordTrig/regTrig; body/nodes cannot change.
+    -- Does not apply to snippets in `extra`.
+    overrides = {},
+
+    -- Remove built-in snippets by trigger string. Does not apply to `extra`.
+    disable = {},
+
+    -- Raw LuaSnip snippet objects appended after built-in snippets.
+    extra = {},
   },
   visual_wrappers = {
     enabled = true,
