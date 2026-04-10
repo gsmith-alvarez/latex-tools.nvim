@@ -209,6 +209,28 @@ Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) 
 | `@o` | `\omega` | `@O` | `\Omega` |
 | `ome` | `\omega` | `Ome` | `\Omega` |
 
+Full Greek names also auto-expand (word boundary required):
+
+| Trigger | Output | Trigger | Output |
+|---------|--------|---------|--------|
+| `alpha` | `\alpha` | `beta` | `\beta` |
+| `gamma` | `\gamma` | `Gamma` | `\Gamma` |
+| `delta` | `\delta` | `Delta` | `\Delta` |
+| `epsilon` | `\epsilon` | `varepsilon` | `\varepsilon` |
+| `zeta` | `\zeta` | `eta` | `\eta` |
+| `theta` | `\theta` | `Theta` | `\Theta` |
+| `vartheta` | `\vartheta` | `iota` | `\iota` |
+| `kappa` | `\kappa` | `lambda` | `\lambda` |
+| `Lambda` | `\Lambda` | `mu` | `\mu` |
+| `nu` | `\nu` | `xi` | `\xi` |
+| `Xi` | `\Xi` | `pi` | `\pi` |
+| `rho` | `\rho` | `sigma` | `\sigma` |
+| `Sigma` | `\Sigma` | `upsilon` | `\upsilon` |
+| `Upsilon` | `\Upsilon` | `phi` | `\phi` |
+| `varphi` | `\varphi` | `Phi` | `\Phi` |
+| `psi` | `\psi` | `Psi` | `\Psi` |
+| `omega` | `\omega` | `Omega` | `\Omega` |
+
 ### Operators (math zone)
 
 | Trigger | Output | Notes |
