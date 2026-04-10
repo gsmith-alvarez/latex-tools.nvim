@@ -28,7 +28,8 @@ Makefile              -- `make test` runs all tests headlessly
 
 ## How it's wired into the dotfiles
 
-- `~/dotfiles/nvim/lua/plugins/editing/luasnip.lua` prepends this plugin to `rtp` and calls `require('latex-tools').setup()` inside the LuaSnip config block.
+- `~/dotfiles/nvim/lua/core/pack.lua` declares the plugin via `gh 'gsmith-alvarez/latex-tools.nvim'` in the deferred section, with `'latex-tools.nvim'` in `M.deferred_names`. This is identical to `sigils.nvim` / `golem-be-good.nvim` — `vim.pack` handles install/update and `packadd` handles deferred loading.
+- `~/dotfiles/nvim/lua/plugins/editing/luasnip.lua` calls `require('latex-tools').setup()` inside the LuaSnip config block (no manual `rtp` manipulation needed).
 - `~/dotfiles/nvim/lua/core/autolist.lua` does `require('latex-tools.matrix')` and calls `matrix_shortcuts.handle_enter()` on `<CR>`.
 - `~/dotfiles/nvim/lua/snippets/markdown/math.lua` is a stub returning `{}, {}` — all math snippets live here now.
 - `~/dotfiles/nvim/lua/snippets/markdown.lua` keeps only text/callout snippets (anything with `is_plain_text` condition).

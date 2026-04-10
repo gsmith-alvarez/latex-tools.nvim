@@ -4,35 +4,62 @@ LuaSnip-powered LaTeX math snippets, visual wrappers, and matrix editing for Neo
 
 Designed for writing math in Markdown (Obsidian-style) and `.tex` files.
 
+> **Note:** This plugin was largely written with the assistance of AI (Claude). It works well for its author's use case, but may have rough edges. Use at your own discretion and feel free to open issues.
+
 ## Requirements
 
-- Neovim 0.9+
+- Neovim 0.10+
 - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - Treesitter `markdown` parser (optional — improves math zone detection, falls back to a line scanner)
 
 ## Installation
 
-### Manual / vim.pack
-
-```bash
-# Add the plugin to your pack directory
-mkdir -p ~/.config/nvim/pack/plugins/start
-git clone https://github.com/yourname/latex-tools.nvim \
-  ~/.config/nvim/pack/plugins/start/latex-tools.nvim
-```
-
-Or with `rtp:prepend` from your Lua config:
+### vim.pack (Neovim 0.12+)
 
 ```lua
-vim.opt.rtp:prepend(vim.fn.expand('~/path/to/latex-tools.nvim'))
+-- In your pack declaration file:
+vim.pack.add('https://github.com/gsmith-alvarez/latex-tools.nvim')
+```
+
+For deferred loading (recommended — keeps startup fast):
+
+```lua
+vim.pack.add(
+  { 'https://github.com/gsmith-alvarez/latex-tools.nvim' },
+  { load = function() end }
+)
+```
+
+Then call `packadd` before your LuaSnip setup runs:
+
+```lua
+vim.cmd.packadd 'latex-tools.nvim'
+```
+
+### lazy.nvim
+
+```lua
+{
+  'gsmith-alvarez/latex-tools.nvim',
+  dependencies = { 'L3MON4D3/LuaSnip' },
+  config = function()
+    require('latex-tools').setup()
+  end,
+}
+```
+
+### Manual
+
+```bash
+git clone https://github.com/gsmith-alvarez/latex-tools.nvim \
+  ~/.config/nvim/pack/plugins/start/latex-tools.nvim
 ```
 
 ### Calling setup()
 
-Call `setup()` **inside your LuaSnip configuration**, after LuaSnip has loaded:
+Call `setup()` **after LuaSnip has loaded**:
 
 ```lua
--- In your LuaSnip config block:
 require('latex-tools').setup()
 ```
 
