@@ -69,11 +69,11 @@ With default config, these snippets fire automatically:
 
 | In | Type | Result |
 |----|------|--------|
-| Plain text | `mk` | `$|$` (inline math) |
-| Plain text | `dm` | `$$\n\|\n$$` (display math) |
-| Math zone | `beg` | `\begin{|}\n\n\end{|}` |
+| Plain text | `mk` | `$·$` (inline math) |
+| Plain text | `dm` | `$$\n·\n$$` (display math) |
+| Math zone | `beg` | `\begin{·}\n\n\end{·}` |
 | Math zone | `@a` | `\alpha` |
-| Math zone | `/` | `\frac{expr}{|}` (smart fraction — wraps preceding expr) |
+| Math zone | `/` | `\frac{expr}{·}` (smart fraction — wraps preceding expr) |
 | Math zone | `xhat` | `\hat{x}` (smart postfix) |
 | Matrix env | `,,` | ` & ` (column separator) |
 
@@ -162,29 +162,31 @@ require('latex-tools').setup({
 
 Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only).
 
+`·` in expansion output marks a cursor / tab-stop position.
+
 ### Math Entry (text zone)
 
 | Trigger | Expands to | Notes |
 |---------|-----------|-------|
-| `mk` | `$\|$` | Inline math |
-| `dm` | `$$\n\|\n$$` | Display math |
+| `mk` | `$·$` | Inline math |
+| `dm` | `$$\n·\n$$` | Display math |
 
 ### Environments (math zone)
 
 | Trigger | Expands to |
 |---------|-----------|
-| `beg` | `\begin{|}\n\n\end{|}` |
-| `pmat` | `\begin{pmatrix}\n\|\n\end{pmatrix}` |
-| `bmat` | `\begin{bmatrix}\n\|\n\end{bmatrix}` |
-| `Bmat` | `\begin{Bmatrix}\n\|\n\end{Bmatrix}` |
-| `vmat` | `\begin{vmatrix}\n\|\n\end{vmatrix}` |
-| `Vmat` | `\begin{Vmatrix}\n\|\n\end{Vmatrix}` |
-| `matrix` | `\begin{matrix}\n\|\n\end{matrix}` |
-| `cases` | `\begin{cases}\n\|\n\end{cases}` |
-| `align` | `\begin{align}\n\|\n\end{align}` |
-| `array` | `\begin{array}\n\|\n\end{array}` |
-| `text` | `\text{|}|` |
-| `'` | `\text{|}|` (shorthand for `text`) |
+| `beg` | `\begin{·}\n\n\end{·}` |
+| `pmat` | `\begin{pmatrix}\n·\n\end{pmatrix}` |
+| `bmat` | `\begin{bmatrix}\n·\n\end{bmatrix}` |
+| `Bmat` | `\begin{Bmatrix}\n·\n\end{Bmatrix}` |
+| `vmat` | `\begin{vmatrix}\n·\n\end{vmatrix}` |
+| `Vmat` | `\begin{Vmatrix}\n·\n\end{Vmatrix}` |
+| `matrix` | `\begin{matrix}\n·\n\end{matrix}` |
+| `cases` | `\begin{cases}\n·\n\end{cases}` |
+| `align` | `\begin{align}\n·\n\end{align}` |
+| `array` | `\begin{array}\n·\n\end{array}` |
+| `text` | `\text{·}·` |
+| `'` | `\text{·}·` (shorthand for `text`) |
 
 ### Greek Letters (math zone)
 
@@ -235,20 +237,20 @@ Full Greek names also auto-expand (word boundary required):
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `/` | `\frac{expr}{|}` | Smart: wraps preceding expr as numerator |
-| `//` | `\frac{|}{|}` | Plain fraction (fill both manually) |
+| `/` | `\frac{expr}{·}` | Smart: wraps preceding expr as numerator |
+| `//` | `\frac{·}{·}` | Plain fraction (fill both manually) |
 | `sr` | `^{2}` | Square |
 | `cb` | `^{3}` | Cube |
-| `rd` | `^{|}` | General superscript |
-| `us` | `_{|}` | Subscript |
-| `sts` | `_\text{|}` | Text subscript |
+| `rd` | `^{·}` | General superscript |
+| `us` | `_{·}` | Subscript |
+| `sts` | `_\text{·}` | Text subscript |
 | `invs` | `^{-1}` | Inverse |
 | `conj` | `^{*}` | Conjugate |
-| `sq` | `\sqrt{| |}` | Square root |
-| `nsq` | `\sqrt[|]{|}` | nth root |
-| `ee` | `e^{ | }` | Exponential |
-| `bf` | `\mathbf{|}` | Bold |
-| `rm` | `\mathrm{|}` | Roman |
+| `sq` | `\sqrt{· ·}` | Square root |
+| `nsq` | `\sqrt[·]{·}` | nth root |
+| `ee` | `e^{ · }` | Exponential |
+| `bf` | `\mathbf{·}` | Bold |
+| `rm` | `\mathrm{·}` | Roman |
 | `Re` | `\mathrm{Re}` | Real part |
 | `Im` | `\mathrm{Im}` | Imaginary part |
 | `trace` | `\mathrm{Tr}` | Trace |
@@ -310,22 +312,22 @@ These are regex autosnippets — they fire automatically as you type.
 | `and` | `\cap` | `orr` | `\cup` |
 | `inn` | `\in` | `notin` | `\not\in` |
 | `sub=` | `\subseteq` | `sup=` | `\supseteq` |
-| `set` | `\{ | \}` | `&&` | `\quad \land \quad` |
+| `set` | `\{ · \}` | `&&` | `\quad \land \quad` |
 | `neg` | `\neg` | `iff` | `\iff` |
-| `?fa` | `\forall |` | `?ex` | `\exists |` |
-| `?ue` | `\exists! |` | `?tf` | `\therefore |` |
-| `?be` | `\because |` | `?qed` | `\square` |
+| `?fa` | `\forall ·` | `?ex` | `\exists ·` |
+| `?ue` | `\exists! ·` | `?tf` | `\therefore ·` |
+| `?be` | `\because ·` | `?qed` | `\square` |
 | `?st` | `\text{ s.t. }` | | |
 
 ### Brackets (math zone)
 
 | Trigger | Output |
 |---------|--------|
-| `lr(` | `\left( \| \right)` |
-| `lr[` | `\left[ \| \right]` |
-| `lr{` | `\left\{ \| \right\}` |
-| `lr\|` | `\left\| \| \right\|` |
-| `lra` | `\left< \| \right>` |
+| `lr(` | `\left( · \right)` |
+| `lr[` | `\left[ · \right]` |
+| `lr{` | `\left\{ · \right\}` |
+| `lr\|` | `\left\| · \right\|` |
+| `lra` | `\left< · \right>` |
 | `brack` | choice menu: `()`, `[]`, `{}`, `<>`, `\|`, `\|\|` |
 
 ### Arrows (math zone)
@@ -340,37 +342,37 @@ These are regex autosnippets — they fire automatically as you type.
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `dint` | `\int_{|}^{|} | \, d| |` | Definite integral (auto) |
+| `dint` | `\int_{·}^{·} · \, d· ·` | Definite integral (auto) |
 | `oint` | `\oint` | Contour integral (auto) |
-| `oinf` | `\int_{0}^{\infty} | \, d| |` | Zero to infinity (auto) |
-| `infi` | `\int_{-\infty}^{\infty} | \, d| |` | Improper integral (auto) |
+| `oinf` | `\int_{0}^{\infty} · \, d· ·` | Zero to infinity (auto) |
+| `infi` | `\int_{-\infty}^{\infty} · \, d· ·` | Improper integral (auto) |
 | `iint` | `\iint` | Double integral (auto) |
 | `iiint` | `\iiint` | Triple integral (auto) |
 | `ddt` | `\frac{d}{dt} ` | Time derivative (auto) |
-| `par` | `\frac{ \partial | }{ \partial | } |` | Partial derivative (tab) |
+| `par` | `\frac{ \partial · }{ \partial · } ·` | Partial derivative (tab) |
 | `pa`_xy_ | `\frac{ \partial x }{ \partial y }` | Regex: `pa([A-Za-z])([A-Za-z])` (tab) |
-| `\int` | `\int | \, d| |` | Integral with measure (tab) |
-| `\sum` | `\sum_{|=|}^{|} |` | Sum with limits (tab) |
-| `\prod` | `\prod_{|=|}^{|} |` | Product with limits (tab) |
-| `lim` | `\lim_{ | \to | } |` | Limit (tab) |
+| `\int` | `\int · \, d· ·` | Integral with measure (tab) |
+| `\sum` | `\sum_{·=·}^{·} ·` | Sum with limits (tab) |
+| `\prod` | `\prod_{·=·}^{·} ·` | Product with limits (tab) |
+| `lim` | `\lim_{ · \to · } ·` | Limit (tab) |
 
 ### Physics (math zone)
 
 | Trigger | Output | Trigger | Output |
 |---------|--------|---------|--------|
 | `kbt` | `k_{B}T` | `msun` | `M_{\odot}` |
-| `bra` | `\bra{|} |` | `ket` | `\ket{|} |` |
-| `brk` | `\braket{ | \| | } |` | `outer` | `\ket{|} \bra{|} |` |
+| `bra` | `\bra{·} ·` | `ket` | `\ket{·} ·` |
+| `brk` | `\braket{ · \| · } ·` | `outer` | `\ket{·} \bra{·} ·` |
 
 ### Chemistry (math zone)
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `pu` | `\pu{ | }` | Physical units (`physics` package) |
-| `cee` | `\ce{ | }` | Chemical equation (`mhchem` package) |
+| `pu` | `\pu{ · }` | Physical units (`physics` package) |
+| `cee` | `\ce{ · }` | Chemical equation (`mhchem` package) |
 | `he4` | `{}^{4}_{2}He ` | Helium-4 isotope shorthand |
 | `he3` | `{}^{3}_{2}He ` | Helium-3 isotope shorthand |
-| `iso` | `{}^{|}_{|}| ` | Generic isotope template |
+| `iso` | `{}^{·}_{·}· ` | Generic isotope template |
 
 ### Trig Functions (math zone)
 
@@ -392,14 +394,14 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 
 | Trigger | Output |
 |---------|--------|
-| `seq` | `\{a_n\}_{n=1}^{\infty} |` (customisable) |
-| `sumn` | `sum_{n=1}^{\infty} |` |
-| `sumk` | `sum_{k=1}^{n} |` |
-| `limn` | `\lim_{n \to \infty} |` |
-| `limsup` | `\limsup_{n \to \infty} |` |
-| `liminf` | `\liminf_{n \to \infty} |` |
-| `geom` | `a \cdot r^{n-1} |` (geometric term) |
-| `arith` | `a + (n - 1)d |` (arithmetic term) |
+| `seq` | `\{a_n\}_{n=1}^{\infty} ·` (customisable) |
+| `sumn` | `sum_{n=1}^{\infty} ·` |
+| `sumk` | `sum_{k=1}^{n} ·` |
+| `limn` | `\lim_{n \to \infty} ·` |
+| `limsup` | `\limsup_{n \to \infty} ·` |
+| `liminf` | `\liminf_{n \to \infty} ·` |
+| `geom` | `a \cdot r^{n-1} ·` (geometric term) |
+| `arith` | `a + (n - 1)d ·` (arithmetic term) |
 
 **Misc subscript shorthands:**
 
