@@ -307,8 +307,9 @@ These are regex autosnippets — they fire automatically as you type.
 |---------|--------|---------|--------|
 | `NN` | `\mathbb{N}` | `ZZ` | `\mathbb{Z}` |
 | `QQ` | `\mathbb{Q}` | `RR` | `\mathbb{R}` |
-| `CC` | `\mathbb{C}` | `LL` | `\mathcal{L}` |
-| `HH` | `\mathcal{H}` | `eset` | `\emptyset` |
+| `CC` | `\mathbb{C}` | `PP` | `\mathbb{P}` |
+| `HH` | `\mathbb{H}` | `II` | `\mathbb{·}` |
+| `LL` | `\mathcal{L}` | `eset` | `\emptyset` |
 | `and` | `\cap` | `orr` | `\cup` |
 | `inn` | `\in` | `notin` | `\not\in` |
 | `sub=` | `\subseteq` | `sup=` | `\supseteq` |
@@ -474,6 +475,23 @@ require('latex-tools').setup({
 ```
 
 `extra` snippets are appended after all built-ins and are not affected by `overrides` or `disable`.
+
+## Auto-Enlarge Brackets
+
+When a snippet that produces `\frac`, `\int`, or `\sum` is triggered inside an existing `(...)` or `[...]` pair on the same line, the brackets are automatically enlarged with `\left` / `\right`.
+
+**Example:**
+
+```
+(x + y//  →  \left(x + \frac{·}{·}\right)
+```
+
+The enlargement fires for: `//`, `/` (smart fraction), `ddt`, `dint`, `oinf`, `infi`, `\int`, `\sum`, `\prod`, `par`.
+
+**Conditions:**
+- Both the opening and matching closing bracket must already exist on the same line.
+- Does nothing if the bracket is already preceded by `\left`.
+- Only `(` and `[` are enlarged (`{` is not, since it is a LaTeX grouping character).
 
 ## Visual Wrappers
 

@@ -21,6 +21,10 @@ function M.register(config)
 
   local context = require 'latex-tools.context'
   local math_parser = require 'latex-tools.math_parser'
+  local auto_brackets = require 'latex-tools.auto_brackets'
+  local events = require 'luasnip.util.events'
+  -- Shared callback: enlarge enclosing ( or [ with \left/\right after expansion
+  local enlarge_cb = { [-1] = { [events.enter] = auto_brackets.enlarge_at_snippet_start } }
 
   -- ============================================================================
   -- PRE-CONSTRUCTION TRIGGER OVERRIDES
@@ -266,7 +270,7 @@ function M.register(config)
     sa({ trig = 'sts', wordTrig = false, condition = in_mathzone }, fmt([[_\text{{{}}}]], { i(1) })),
     sa({ trig = 'sq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt{{ {} }}{}]], { i(1), i(2) })),
     sa({ trig = 'nsq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt[{}]{{{}}}{}]], { i(1, 'n'), i(2), i(3) })),
-    sa({ trig = '//', wordTrig = false, condition = in_mathzone }, fmt([[\frac{{{}}}{{{}}}{}]], { i(1), i(2), i(3) })),
+    sa({ trig = '//', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\frac{{{}}}{{{}}}{}]], { i(1), i(2), i(3) })),
     -- [060b] Smart Auto-capture Fraction (mA)
     -- Uses tokenizer to properly handle balanced parens, brackets, and LaTeX commands
     -- Examples: x/ → \frac{x}{}, (a+b)/ → \frac{a+b}{}, \alpha/ → \frac{\alpha}{}
@@ -276,6 +280,7 @@ function M.register(config)
         wordTrig = false,
         condition = in_mathzone,
         resolveExpandParams = make_smart_fraction_resolve(),
+        callbacks = enlarge_cb,
       },
       fmt([[\frac{{{}}}{{{}}}]], {
         f(function(_, snip)
@@ -334,12 +339,14 @@ function M.register(config)
     sa({ trig = 'set', wordTrig = false, condition = in_mathzone }, fmt([[\{{ {} \}}{}]], { i(1), i(2) })),
     sa({ trig = '&&', wordTrig = false, condition = in_mathzone }, t [[\quad \land \quad]]),
     sa({ trig = 'LL', wordTrig = false, condition = in_mathzone }, t [[\mathcal{L}]]),
-    sa({ trig = 'HH', wordTrig = false, condition = in_mathzone }, t [[\mathcal{H}]]),
-    sa({ trig = 'CC', wordTrig = false, condition = in_mathzone }, t [[\mathbb{C}]]),
-    sa({ trig = 'RR', wordTrig = false, condition = in_mathzone }, t [[\mathbb{R}]]),
-    sa({ trig = 'ZZ', wordTrig = false, condition = in_mathzone }, t [[\mathbb{Z}]]),
     sa({ trig = 'NN', wordTrig = false, condition = in_mathzone }, t [[\mathbb{N}]]),
+    sa({ trig = 'ZZ', wordTrig = false, condition = in_mathzone }, t [[\mathbb{Z}]]),
     sa({ trig = 'QQ', wordTrig = false, condition = in_mathzone }, t [[\mathbb{Q}]]),
+    sa({ trig = 'RR', wordTrig = false, condition = in_mathzone }, t [[\mathbb{R}]]),
+    sa({ trig = 'CC', wordTrig = false, condition = in_mathzone }, t [[\mathbb{C}]]),
+    sa({ trig = 'PP', wordTrig = false, condition = in_mathzone }, t [[\mathbb{P}]]),
+    sa({ trig = 'HH', wordTrig = false, condition = in_mathzone }, t [[\mathbb{H}]]),
+    sa({ trig = 'II', wordTrig = false, condition = in_mathzone }, fmt([[\mathbb{{{}}}]], { i(1) })),
 
     -- ── LOGICAL ARGUMENTS ( mA ) ──────────────────────────────────────────────────
     sa({ trig = '?fa', wordTrig = false, condition = in_mathzone }, fmt([[\forall {}]], { i(1) })),
@@ -392,13 +399,13 @@ function M.register(config)
     sa({ trig = 'yjj', wordTrig = false, condition = in_mathzone }, t 'y_{j}'),
 
     -- ── INTEGRALS / DERIVATIVES ( mA ) ───────────────────────────────────────────
-    sa({ trig = 'ddt', wordTrig = false, condition = in_mathzone }, t [[\frac{d}{dt} ]]),
-    sa({ trig = 'dint', wordTrig = false, condition = in_mathzone }, fmt([[\int_{{{}}}^{{{}}} {} \, d{} {}]], { i(1, '0'), i(2, '1'), i(3), i(4, 'x'), i(5) })),
+    sa({ trig = 'ddt',  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, t [[\frac{d}{dt} ]]),
+    sa({ trig = 'dint', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int_{{{}}}^{{{}}} {} \, d{} {}]], { i(1, '0'), i(2, '1'), i(3), i(4, 'x'), i(5) })),
     sa({ trig = 'iiint', wordTrig = false, condition = in_mathzone }, t [[\iiint]]),
-    sa({ trig = 'iint', wordTrig = false, condition = in_mathzone }, t [[\iint]]),
-    sa({ trig = 'oint', wordTrig = false, condition = in_mathzone }, t [[\oint]]),
-    sa({ trig = 'oinf', wordTrig = false, condition = in_mathzone }, fmt([[\int_{{0}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
-    sa({ trig = 'infi', wordTrig = false, condition = in_mathzone }, fmt([[\int_{{-\infty}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
+    sa({ trig = 'iint',  wordTrig = false, condition = in_mathzone }, t [[\iint]]),
+    sa({ trig = 'oint',  wordTrig = false, condition = in_mathzone }, t [[\oint]]),
+    sa({ trig = 'oinf',  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int_{{0}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
+    sa({ trig = 'infi',  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int_{{-\infty}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
 
     -- ── QUANTUM MECHANICS / PHYSICS ( mA ) ───────────────────────────────────────
     sa({ trig = 'dag', wordTrig = false, condition = in_mathzone }, t [[^{\dagger}]]),
@@ -738,13 +745,13 @@ function M.register(config)
   -- ==========================================================================
   local regular_snippets = {
     -- \sum / \prod / \int with limits
-    sa({ trig = [[\sum]], wordTrig = false, condition = in_mathzone }, fmt([[\sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
-    sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone }, fmt([[\prod_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
-    sa({ trig = [[\int]], wordTrig = false, condition = in_mathzone }, fmt([[\int {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
+    sa({ trig = [[\sum]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
+    sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
+    sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
     sa({ trig = 'lim', wordTrig = false, condition = in_mathzone }, fmt([[\lim_{{ {} \to {} }} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3) })),
 
     -- Partial derivatives
-    sa({ trig = 'par', wordTrig = false, condition = in_mathzone }, fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}]], { i(1, 'y'), i(2, 'x'), i(3) })),
+    sa({ trig = 'par', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}]], { i(1, 'y'), i(2, 'x'), i(3) })),
     sa(
       {
         trig = 'pa([A-Za-z])([A-Za-z])',
