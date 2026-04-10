@@ -23,8 +23,10 @@ function M.register(config)
   local math_parser = require 'latex-tools.math_parser'
   local auto_brackets = require 'latex-tools.auto_brackets'
   local events = require 'luasnip.util.events'
-  -- Shared callback: enlarge enclosing ( or [ with \left/\right after expansion
-  local enlarge_cb = { [-1] = { [events.enter] = auto_brackets.enlarge_at_snippet_start } }
+  -- Shared callback: enlarge enclosing ( or [ with \left/\right after expansion.
+  -- Uses pre_expand so event_args.expand_pos gives a reliable cursor position
+  -- without depending on LuaSnip's internal mark API.
+  local enlarge_cb = { [-1] = { [events.pre_expand] = auto_brackets.enlarge_at_trigger_pos } }
 
   -- ============================================================================
   -- PRE-CONSTRUCTION TRIGGER OVERRIDES
