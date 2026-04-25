@@ -109,6 +109,10 @@ function M.check()
     if snip.enabled == false then
       vim.health.info('Snippets module is disabled (`snippets.enabled = false`).')
     else
+      local timing = snip.register_timing or 'schedule'
+      if timing ~= 'immediate' then
+        vim.health.info(('Snippet registration timing: `%s` (not `immediate`).'):format(timing))
+      end
       local fts = snip.filetypes
       if type(fts) == 'table' and #fts > 0 then
         vim.health.info('Snippet filetypes: `' .. table.concat(fts, '`, `') .. '`.')

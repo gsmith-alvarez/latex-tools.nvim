@@ -3,9 +3,16 @@
 -- Call require('latex-tools').setup() to activate the plugin.
 local M = {}
 
+-- Avoid duplicate ls.add_snippets when setup() is called more than once.
+-- idle -> scheduled (defer path) -> done; immediate goes idle -> done in one step.
+local snippet_register_state = 'idle'
+
 local defaults = {
   snippets = {
     enabled = true,
+    -- When to build and register LuaSnip snippets (heavy). "schedule" keeps setup() fast.
+    -- "filetype" defers until the first buffer with a matching &filetype (see `filetypes`).
+    register_timing = 'schedule', ---@type 'immediate'|'schedule'|'filetype'
     -- Filetypes to register snippets into.
     -- Default keeps backward compatibility; Markdown-first users can set { 'markdown' }.
     filetypes = { 'markdown', 'tex' },
@@ -71,15 +78,66 @@ local defaults = {
   },
 }
 
+--- Register snippets according to `config.snippets.register_timing` (idempotent).
+--- @param config table Merged plugin config
+local function register_snippets_if_needed(config)
+  if not config.snippets or not config.snippets.enabled then
+    return
+  end
+  if snippet_register_state == 'done' then
+    return
+  end
+
+  local timing = config.snippets.register_timing or 'schedule'
+  if timing ~= 'immediate' and timing ~= 'schedule' and timing ~= 'filetype' then
+    timing = 'schedule'
+  end
+
+  if timing == 'immediate' then
+    require('latex-tools.snippets').register(config)
+    snippet_register_state = 'done'
+    return
+  end
+
+  if snippet_register_state == 'scheduled' then
+    return
+  end
+  snippet_register_state = 'scheduled'
+
+  if timing == 'schedule' then
+    vim.schedule(function()
+      if snippet_register_state ~= 'scheduled' then
+        return
+      end
+      require('latex-tools.snippets').register(config)
+      snippet_register_state = 'done'
+    end)
+    return
+  end
+
+  -- filetype: first matching buffer pays the registration cost
+  local group = vim.api.nvim_create_augroup('latex-tools-defer-snippets', { clear = true })
+  vim.api.nvim_create_autocmd('FileType', {
+    group = group,
+    pattern = config.snippets.filetypes or { 'markdown', 'tex' },
+    once = true,
+    callback = function()
+      if snippet_register_state ~= 'scheduled' then
+        return
+      end
+      require('latex-tools.snippets').register(config)
+      snippet_register_state = 'done'
+    end,
+  })
+end
+
 --- Setup latex-tools.nvim.
 --- @param opts table|nil User configuration (merged with defaults via tbl_deep_extend)
 function M.setup(opts)
   local config = vim.tbl_deep_extend('force', defaults, opts or {})
   M.config = config
 
-  if config.snippets.enabled then
-    require('latex-tools.snippets').register(config)
-  end
+  register_snippets_if_needed(config)
 
   if config.visual_wrappers.enabled then
     require('latex-tools.visual_wrappers').setup(config)

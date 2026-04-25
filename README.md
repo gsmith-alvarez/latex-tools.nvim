@@ -88,6 +88,12 @@ require('latex-tools').setup({
   snippets = {
     enabled = true,
 
+    -- When LuaSnip snippets are built and registered (default moves work off `setup()` for faster startup):
+    --   "schedule" — next main-loop tick (safe with lazy.nvim; snippets appear almost immediately).
+    --   "immediate" — same as older versions; all snippets built inside `setup()`.
+    --   "filetype" — first time you open a buffer whose &filetype is in `filetypes` below.
+    register_timing = 'schedule',
+
     -- Filetypes to register snippets into.
     -- For a Markdown-first workflow, set { 'markdown' }.
     filetypes = { 'markdown', 'tex' },

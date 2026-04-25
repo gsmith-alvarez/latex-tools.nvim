@@ -12,7 +12,7 @@ User-facing docs live in `README.md`. This file is for *contributors* (you).
 
 ```
 lua/latex-tools/
-  init.lua            -- setup() entry + default config + submodule exports
+  init.lua            -- setup() entry + default config; defers snippet registration by default (`register_timing`)
   context.lua         -- math zone / matrix env / code block detection (self-contained)
   math_parser.lua     -- tokenizer for smart-fraction / smart-postfix (verbatim copy, no deps)
   snippets.lua        -- ALL built-in snippets; register(config) called from setup()

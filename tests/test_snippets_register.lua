@@ -161,5 +161,47 @@ T['snippets.register']['disable removes dynamic matrix by regTrig key'] = functi
   MiniTest.expect.equality(triggers[DYN_MAT] == true, false)
 end
 
+T['setup'] = MiniTest.new_set()
+
+T['setup']['register_timing schedule defers snippets until scheduled callback'] = function()
+  package.loaded['latex-tools'] = nil
+  install_stubs()
+  local saved_sched = vim.schedule
+  local queued = {}
+  vim.schedule = function(fn)
+    queued[#queued + 1] = fn
+  end
+  local lt = require('latex-tools')
+  local cfg = base_config()
+  cfg.snippets.register_timing = 'schedule'
+  lt.setup(cfg)
+  local ls = require('luasnip')
+  MiniTest.expect.equality(ls._added.markdown, nil)
+  MiniTest.expect.equality(#queued, 1)
+  queued[1]()
+  MiniTest.expect.equality(ls._added.markdown ~= nil, true)
+  vim.schedule = saved_sched
+  package.loaded['latex-tools'] = nil
+end
+
+T['setup']['register_timing immediate registers inside setup'] = function()
+  package.loaded['latex-tools'] = nil
+  install_stubs()
+  local scheduled = false
+  local saved_sched = vim.schedule
+  vim.schedule = function(_fn)
+    scheduled = true
+  end
+  local lt = require('latex-tools')
+  local cfg = base_config()
+  cfg.snippets.register_timing = 'immediate'
+  lt.setup(cfg)
+  vim.schedule = saved_sched
+  MiniTest.expect.equality(scheduled, false)
+  local ls = require('luasnip')
+  MiniTest.expect.equality(ls._added.markdown ~= nil, true)
+  package.loaded['latex-tools'] = nil
+end
+
 return T
 
