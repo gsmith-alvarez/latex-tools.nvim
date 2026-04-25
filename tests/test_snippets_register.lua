@@ -124,5 +124,42 @@ T['snippets.register']['plain // fraction snippet is removed'] = function()
   MiniTest.expect.equality(triggers['//'] == true, false)
 end
 
+local DYN_MAT = '(%d+)%*(%d+)([bBpvV])mat'
+
+T['snippets.register']['dynamic matrix regTrig is present by default'] = function()
+  install_stubs()
+  local cfg = base_config()
+
+  require('latex-tools.snippets').register(cfg)
+
+  local ls = require('luasnip')
+  local triggers = flatten_triggers(ls._added.markdown)
+  MiniTest.expect.equality(triggers[DYN_MAT] == true, true)
+end
+
+T['snippets.register']['disabling matrices category removes dynamic matrix trigger'] = function()
+  install_stubs()
+  local cfg = base_config()
+  cfg.snippets.categories.matrices = false
+
+  require('latex-tools.snippets').register(cfg)
+
+  local ls = require('luasnip')
+  local triggers = flatten_triggers(ls._added.markdown)
+  MiniTest.expect.equality(triggers[DYN_MAT] == true, false)
+end
+
+T['snippets.register']['disable removes dynamic matrix by regTrig key'] = function()
+  install_stubs()
+  local cfg = base_config()
+  cfg.snippets.disable = { DYN_MAT }
+
+  require('latex-tools.snippets').register(cfg)
+
+  local ls = require('luasnip')
+  local triggers = flatten_triggers(ls._added.markdown)
+  MiniTest.expect.equality(triggers[DYN_MAT] == true, false)
+end
+
 return T
 

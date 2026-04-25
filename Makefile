@@ -1,3 +1,4 @@
+# Headless MiniTest: tests/test_context.lua, test_math_parser.lua, test_snippets_register.lua
 TESTS_DIR=tests
 
 .PHONY: test test-file

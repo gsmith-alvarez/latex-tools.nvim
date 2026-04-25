@@ -15,6 +15,7 @@ local defaults = {
       begin_env = 'beg',
       matrix_column = ',,',
     },
+    -- Set any key to false to omit that snippet group (matrices = dynamic matrix regTrig, `,,`, `&=`; see README).
     categories = {
       greek_letters = true,
       operators = true,

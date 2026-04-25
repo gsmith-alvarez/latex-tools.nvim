@@ -186,8 +186,9 @@ function M.register(config)
     end
   end
 
-  -- Dynamic matrix body: called by d() in the rows*cols[bBpvV]mat autosnippet.
-  -- Generates r() restore nodes at every cell so Tab visits each one.
+  -- Dynamic matrix body: middle chunk inside fmt(...) for the rows*cols[bBpvV]mat autosnippet.
+  -- Open/close lines use fmt + short f() returns only the env letter — LuaSnip f() must not return strings with embedded newlines.
+  -- Picks the first two numeric regex captures as rows/cols; builds r() restore nodes so Tab visits each cell.
   local function generate_matrix_body(_, snip)
     local captures = (snip and snip.captures)
       or (snip and snip.snippet and snip.snippet.captures)
@@ -596,7 +597,7 @@ function M.register(config)
     ),
 
     -- Dynamic matrix: {rows}*{cols}{type}mat e.g. 3*3pmat → 3×3 pmatrix (auto); Tab visits each cell.
-    -- Uses `*` not `x` so `3x3…` does not fire letter+digit auto-subscript on `x3`.
+    -- Uses `*` not `x` between sizes so `([A-Za-z])(%d)` auto-subscript does not match `x3` mid-trigger.
     sa(
       {
         trig = '(%d+)%*(%d+)([bBpvV])mat',

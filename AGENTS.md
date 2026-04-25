@@ -21,9 +21,10 @@ lua/latex-tools/
   visual_wrappers.lua -- <leader>nu/no/nc/nk/nb visual-mode wrappers
 plugin/latex-tools.lua  -- intentionally empty; setup() must be called explicitly
 tests/
-  minimal_init.lua    -- adds plugin to rtp, loads mini.nvim from ~/.local/share/nvim/lazy/mini.nvim
-  test_context.lua    -- math zone + matrix env + code block tests (MiniTest)
+  minimal_init.lua         -- adds plugin to rtp, loads mini.nvim from ~/.local/share/nvim/lazy/mini.nvim
+  test_context.lua         -- math zone + matrix env + code block tests (MiniTest)
   test_math_parser.lua
+  test_snippets_register.lua -- stub LuaSnip; filetypes, categories, disable pipeline
 Makefile              -- `make test` runs all tests headlessly
 ```
 
@@ -40,7 +41,7 @@ Do NOT re-add math snippets to the dotfiles. They belong here.
 ## Running tests
 
 ```bash
-cd ~/code/vibe/nvim-plugins/latex-tools.nvim
+cd /path/to/latex-tools.nvim
 make test                                    # all tests
 make test-file FILE=tests/test_context.lua   # single file
 ```
@@ -78,9 +79,9 @@ There's a regression test: `'is_in_mathzone returns true at closing $ (insert mo
 
 Overrides are keyed by the ORIGINAL trigger string — for regex snippets that's the raw Lua pattern. Body/nodes are not patchable; only the three trigger fields.
 
-### 6. Snippets register once per filetype
+### 6. Snippets register once per configured filetype
 
-Registration loops over `{'markdown', 'tex'}`. Do not add a third call for the same snippets — earlier there was a bug where snippets registered 4× causing ordering issues. Commit `951b38b` fixed it.
+`snippets.register()` loops over `config.snippets.filetypes` (default `{ 'markdown', 'tex' }`) and calls `ls.add_snippets(ft, ...)` per entry. Do not add duplicate registrations for the same `(ft, key)` pair — earlier there was a bug where snippets registered multiple times causing ordering issues. Commit `951b38b` fixed it.
 
 ### 7. `auto_brackets.lua` — `enlarge_enclosing()` callback
 
@@ -102,9 +103,11 @@ Snippets that get `enlarge_cb`: `/` (smart frac), `ddt`, `dint`, `oinf`, `infi`,
 
 Do not merge this into `is_in_matrix_env()` — the distinction is load-bearing for `&=` not triggering in matrix environments.
 
-### 10. `config.snippets.categories` is currently unused
+### 10. `config.snippets.categories` filters built-ins (before `disable` / `extra`)
 
-The default config table includes a `categories` subtable (greek_letters, operators, symbols, …) but `snippets.register()` does not read it — all built-in snippets always register. This is dead config left as a placeholder for future per-category enable/disable. Do not add filtering logic without also wiring it into the pipeline and adding tests.
+`apply_pipeline()` in `snippets.lua` drops any snippet whose `category_for_trigger(snip.trigger)` maps to a category key set to **`false`** in `config.snippets.categories`. Unknown triggers fall through as enabled. Regex snippets are keyed by their **raw pattern string** (e.g. dynamic matrix `'(%d+)%*(%d+)([bBpvV])mat'`). Then `snippets.disable` removes by trigger key; `snippets.extra` is appended unchanged.
+
+`mk` / `dm` are registered outside this pipeline for markdown only. Tests: `tests/test_snippets_register.lua`.
 
 ## Where to look for specific behaviors
 
@@ -117,8 +120,10 @@ The default config table includes a `categories` subtable (greek_letters, operat
 | "How does `&=` insert `&= \\`?" | `snippets.lua` align shorthand (condition: `in_align_env` from `context.lua`) |
 | "Where's the default keymap for `<leader>nu`?" | `visual_wrappers.lua:setup` |
 | "Why did `(` become `\left(`?" | `auto_brackets.lua:enlarge_enclosing` attached via `enlarge_cb` |
-| "How does `3*3pmat` generate a full matrix?" | `snippets.lua` dynamic matrix autosnippet (`generate_matrix_body` + `d()`) |
-| "Why does `lim` have choices for `limsup`?" | `snippets.lua` unified `lim` with `c()` choice nodes in sequences section |
+| "How does `3*3pmat` generate a full matrix?" | `snippets.lua`: regex autosnippet `(%d+)%*(%d+)([bBpvV])mat` + `fmt` + `generate_matrix_body` (`d()` + `r()` per cell) |
+| "Why did LuaSnip error on matrix expand?" | Function nodes must not return text with embedded `\n`; use `fmt` for newlines (same dynamic matrix snippet) |
+| "Why doesn't bare `pmat` steal `3*3pmat`?" | `not_dyn_matrix_autosnip_suffix()` on static `pmat` / `bmat` / … |
+| "How does bare `lim` vs Tab on `\lim` work?" | `snippets.lua` sequences + `regular_snippets`: autosnippet `lim` → `\lim` only; Tab on `\lim` expands limits snippet (same idea as `\int`) |
 
 ## Debugging math zone false negatives
 
@@ -138,5 +143,5 @@ Conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`. Keep comm
 - Don't touch `col` arithmetic in `_check_mathzone_fallback` without re-running the closing-`$` regression test.
 - Don't collapse the markdown/tex branches in `_check_mathzone_treesitter` — they behave differently on purpose.
 - Don't auto-setup on plugin load. `setup()` is explicit so users control ordering relative to LuaSnip.
-- Don't implement `config.snippets.categories` filtering without also adding tests — it is currently intentionally dead config (see design point #10).
+- Don't change category filtering without updating `category_for_trigger()` and tests in `test_snippets_register.lua`.
 - Don't export `auto_brackets` from `init.lua` — it is internal to `snippets.lua`.

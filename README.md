@@ -75,6 +75,7 @@ With default config, these snippets fire automatically:
 | Math zone | `@a` | `\alpha` |
 | Math zone | `/` | `\frac{expr}{·}` (smart fraction — wraps preceding expr) |
 | Math zone | `xhat` | `\hat{x}` (smart postfix) |
+| Math zone | `3*3pmat` | 3×3 `pmatrix` with a tab stop in every cell (dynamic matrix) |
 | Matrix env | `,,` | ` & ` (column separator) |
 
 ## Configuration
@@ -98,7 +99,7 @@ require('latex-tools').setup({
       matrix_column = ',,',   -- matrix env → ' & '
     },
 
-    -- Enable/disable built-in snippet categories.
+    -- Built-in snippet buckets: set a key to false to drop that whole group (see "Snippet categories" below).
     categories = {
       greek_letters = true,
       operators = true,
@@ -162,6 +163,12 @@ require('latex-tools').setup({
 })
 ```
 
+### Snippet categories
+
+`snippets.categories` groups triggers into buckets. Set a key to **`false`** to omit every snippet in that bucket (see `category_for_trigger()` in `lua/latex-tools/snippets.lua`). Omitting a key keeps the default (**enabled**).
+
+Notable **`matrices`** snippets: the dynamic matrix pattern `(%d+)%*(%d+)([bBpvV])mat`, the matrix-column trigger (default `,,`), and **`&=`** (align row operator). **`environments`** is separate: bare `pmat`, `bmat`, `matrix`, etc.
+
 ## Snippet Reference
 
 Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only).
@@ -203,6 +210,8 @@ Some snippets will use the current visual selection as their default content (vi
 | `subst` | `\substack{·}·` |
 | `text` | `\text{·}·` |
 | `'` | `\text{·}·` (shorthand for `text`) |
+
+Prefilled **b** / **B** / **p** / **v** / **V** matrices with a tab stop in every cell use the separate **dynamic matrix** autosnippet (`N*M` + type + `mat`, e.g. `3*3pmat`); see [Matrix Editing](#matrix-editing-matrix-env).
 
 ### Greek Letters (math zone)
 
@@ -298,6 +307,8 @@ These are regex autosnippets — they fire automatically as you type.
 |---------|---------|--------|
 | `([A-Za-z])(%d)` | `x2` | `x_{2}` |
 | `([A-Za-z])_(%d%d)` | `x_12` | `x_{12}` (two-digit subscript) |
+
+That is why the **dynamic matrix** trigger uses an asterisk between dimensions (`3*3pmat`), not `3x3…`: a middle `x` would match as a letter before a digit and expand too early (see [Matrix Editing](#matrix-editing-matrix-env)).
 
 ### Symbols (math zone)
 
@@ -517,7 +528,10 @@ Only `trig`, `wordTrig`, and `regTrig` can be changed. Snippet body and nodes ar
 ```lua
 require('latex-tools').setup({
   snippets = {
-    disable = { 'sr', 'cb' },  -- remove 'square' and 'cube' autosnippets
+    -- Plain triggers by exact string:
+    disable = { 'sr', 'cb' }, -- 'square' and 'cube' autosnippets
+    -- Regex / regTrig snippets by their raw Lua pattern string:
+    -- disable = { '(%d+)%*(%d+)([bBpvV])mat' }, -- dynamic matrix only
   },
 })
 ```
