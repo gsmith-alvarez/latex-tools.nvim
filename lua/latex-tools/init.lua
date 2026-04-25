@@ -6,6 +6,9 @@ local M = {}
 local defaults = {
   snippets = {
     enabled = true,
+    -- Filetypes to register snippets into.
+    -- Default keeps backward compatibility; Markdown-first users can set { 'markdown' }.
+    filetypes = { 'markdown', 'tex' },
     triggers = {
       inline_math = 'mk',
       display_math = 'dm',
@@ -43,11 +46,11 @@ local defaults = {
   visual_wrappers = {
     enabled = true,
     keymaps = {
-      underbrace = '<leader>nu',
-      overbrace  = '<leader>no',
-      cancel     = '<leader>nc',
-      cancelto   = '<leader>nk',
-      underset   = '<leader>nb',
+      underbrace = '<leader>lu',
+      overbrace  = '<leader>lo',
+      cancel     = '<leader>lc',
+      cancelto   = '<leader>lk',
+      underset   = '<leader>lb',
     },
   },
   matrix = {

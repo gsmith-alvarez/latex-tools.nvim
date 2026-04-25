@@ -14,6 +14,8 @@ function M.register(config)
   local sn = ls.snippet_node
   local t = ls.text_node
   local i = ls.insert_node
+  local c = ls.choice_node
+  local d = ls.dynamic_node
   local f = ls.function_node
   local r = ls.restore_node
   local fmt = require('luasnip.extras.fmt').fmt
@@ -181,6 +183,22 @@ function M.register(config)
     return sn(nil, nodes)
   end
 
+  -- Visual selection helper: if a visual selection was yanked into LS_SELECT_RAW,
+  -- use it as the default snippet content; otherwise fall back to placeholder text.
+  local function get_visual(_args, parent, default_text)
+    local raw = parent and parent.snippet and parent.snippet.env and parent.snippet.env.LS_SELECT_RAW
+    if type(raw) == 'string' and #raw > 0 then
+      return sn(nil, i(1, raw))
+    end
+    return sn(nil, i(1, default_text or ''))
+  end
+
+  local function v(pos, default_text)
+    return d(pos, function(args, parent)
+      return get_visual(args, parent, default_text)
+    end)
+  end
+
   -- mk and dm: plain text → math entry (markdown-only, not added to auto_snippets)
   local is_plain_text = context.is_plain_text
   local mk_snippet = s(
@@ -287,9 +305,9 @@ function M.register(config)
     sa({ trig = 'tau',        wordTrig = true, condition = in_mathzone }, t [[\tau]]),
 
     -- ── TEXT ENVIRONMENT ( mA ) ──────────────────────────────────────────────────
-    sa({ trig = 'text', wordTrig = false, condition = in_mathzone }, fmt([[\text{<>}<>]], { i(1), i(2) }, { delimiters = '<>' })),
+    sa({ trig = 'text', wordTrig = false, condition = in_mathzone }, fmt([[\text{<>}<>]], { v(1, 'text'), i(2) }, { delimiters = '<>' })),
     -- " → \text{} (obsidian shorthand)
-    sa({ trig = "'", wordTrig = false, condition = in_mathzone }, fmt([[\text{<>}<>]], { i(1), i(2) }, { delimiters = '<>' })),
+    sa({ trig = "'", wordTrig = false, condition = in_mathzone }, fmt([[\text{<>}<>]], { v(1, 'text'), i(2) }, { delimiters = '<>' })),
 
     -- ── BASIC OPERATIONS ( mA, no word boundary ) ──────────────────────────────
     sa({ trig = 'sr', wordTrig = false, condition = in_mathzone }, t '^{2}'),
@@ -368,6 +386,32 @@ function M.register(config)
     sa({ trig = '-->', wordTrig = false, condition = in_mathzone, priority = 1100 }, t [[\longrightarrow]]),
     sa({ trig = 'perp', wordTrig = false, condition = in_mathzone }, t [[\perp]]),
 
+    -- ── HIGH-LEVERAGE CONSTRUCTS ( mA ) ──────────────────────────────────────────
+    -- Extensible arrows with optional below-text.
+    sa(
+      { trig = 'xra', wordTrig = false, condition = in_mathzone },
+      c(1, {
+        fmt([[\xrightarrow{{{}}}{}]], { v(1, 'top'), i(2) }),
+        fmt([[\xrightarrow[{}]{{{}}}{}]], { i(1, 'bottom'), v(2, 'top'), i(3) }),
+      })
+    ),
+    sa(
+      { trig = 'xla', wordTrig = false, condition = in_mathzone },
+      c(1, {
+        fmt([[\xleftarrow{{{}}}{}]], { v(1, 'top'), i(2) }),
+        fmt([[\xleftarrow[{}]{{{}}}{}]], { i(1, 'bottom'), v(2, 'top'), i(3) }),
+      })
+    ),
+
+    -- Continued fraction.
+    sa({ trig = 'cfr', wordTrig = false, condition = in_mathzone }, fmt([[\cfrac{{{}}}{{{}}}{}]], { v(1, 'num'), i(2, 'den'), i(3) })),
+
+    -- Display/align helpers (kept small; align-only where appropriate).
+    sa({ trig = 'itr', wordTrig = false, condition = all(in_mathzone, in_align_env) }, fmt([[\intertext{{{}}}{}]], { v(1, 'text'), i(2) })),
+    sa({ trig = 'tag', wordTrig = false, condition = all(in_mathzone, in_align_env) }, fmt([[\tag{{{}}}{}]], { i(1, 'tag'), i(2) })),
+    sa({ trig = 'ntg', wordTrig = false, condition = all(in_mathzone, in_align_env) }, t [[\notag]]),
+    sa({ trig = 'br', wordTrig = true, condition = all(in_mathzone, in_align_env) }, { t { [[\\]], '' }, i(1) }),
+
     -- ── ARROWS ( mA ) ────────────────────────────────────────────────────────────
     sa({ trig = '<->', wordTrig = false, condition = in_mathzone }, t [[\leftrightarrow ]]),
     sa({ trig = '->', wordTrig = false, condition = in_mathzone }, t [[\to]]),
@@ -427,15 +471,15 @@ function M.register(config)
     -- cursor has no valid preceding expression, resolveExpandParams returns nil and
     -- LuaSnip falls back to the lower-priority snippet here, allowing the user to
     -- type "hat" with no prior expression and get "\hat{}{}" with a fill-in prompt.
-    sa({ trig = 'hat', wordTrig = false, condition = in_mathzone }, fmt([[\hat{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'bar', wordTrig = false, condition = in_mathzone }, fmt([[\bar{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'dot', wordTrig = false, condition = in_mathzone }, fmt([[\dot{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'ddot', wordTrig = false, condition = in_mathzone }, fmt([[\ddot{{{}}}{}]], { i(1), i(2) })),
+    sa({ trig = 'hat', wordTrig = false, condition = in_mathzone }, fmt([[\hat{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'bar', wordTrig = false, condition = in_mathzone }, fmt([[\bar{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'dot', wordTrig = false, condition = in_mathzone }, fmt([[\dot{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'ddot', wordTrig = false, condition = in_mathzone }, fmt([[\ddot{{{}}}{}]], { v(1, 'x'), i(2) })),
     sa({ trig = 'cdot', wordTrig = false, condition = in_mathzone }, t [[\cdot]]),
-    sa({ trig = 'tilde', wordTrig = false, condition = in_mathzone }, fmt([[\tilde{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'und', wordTrig = false, condition = in_mathzone }, fmt([[\underline{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'vec', wordTrig = false, condition = in_mathzone }, fmt([[\vec{{{}}}{}]], { i(1), i(2) })),
-    sa({ trig = 'mfr', wordTrig = false, condition = in_mathzone }, fmt([[\mathfrak{{{}}}{}]], { i(1), i(2) })),
+    sa({ trig = 'tilde', wordTrig = false, condition = in_mathzone }, fmt([[\tilde{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'und', wordTrig = false, condition = in_mathzone }, fmt([[\underline{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'vec', wordTrig = false, condition = in_mathzone }, fmt([[\vec{{{}}}{}]], { v(1, 'x'), i(2) })),
+    sa({ trig = 'mfr', wordTrig = false, condition = in_mathzone }, fmt([[\mathfrak{{{}}}{}]], { v(1, 'x'), i(2) })),
     sa(
       { trig = 'deco', wordTrig = true, condition = in_mathzone },
       {
@@ -507,7 +551,7 @@ function M.register(config)
     sa({ trig = 'cases', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{cases}}\n{}\n\\end{{cases}}', { i(1) })),
     sa({ trig = 'align', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{align}}\n{}\n\\end{{align}}', { i(1) })),
     sa({ trig = 'array', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{array}}\n{}\n\\end{{array}}', { i(1) })),
-    sa({ trig = 'box', wordTrig = false, condition = in_mathzone }, fmt([[\boxed{{{}}}{}]], { i(1), i(2) })),
+    sa({ trig = 'box', wordTrig = false, condition = in_mathzone }, fmt([[\boxed{{{}}}{}]], { v(1, 'x'), i(2) })),
     sa({ trig = 'subst', wordTrig = false, condition = in_mathzone }, fmt([[\substack{{{}}}{}]], { i(1), i(2) })),
 
     -- ── BRACKETS ( mA ) ──────────────────────────────────────────────────────────
@@ -864,15 +908,139 @@ function M.register(config)
   -- PIPELINE: disable
   -- (trig overrides are handled at construction time via sa())
   -- ============================================================================
+  local function category_for_trigger(trig)
+    -- If a trigger isn't recognized, we treat it as uncategorized (always enabled).
+    -- This keeps the filter robust as snippets evolve.
+
+    -- RegTrig patterns
+    local regtrig_sets = {
+      trig_functions = {
+        ['(.-)(arcsin)'] = true,
+        ['(.-)(arccos)'] = true,
+        ['(.-)(arctan)'] = true,
+        ['(.-)(sin)'] = true,
+        ['(.-)(cos)'] = true,
+        ['(.-)(tan)'] = true,
+        ['(.-)(csc)'] = true,
+        ['(.-)(sec)'] = true,
+        ['(.-)(cot)'] = true,
+        ['(.-)(exp)'] = true,
+        ['(.-)(log)'] = true,
+        ['(.-)(ln)'] = true,
+        ['(.-)(det)'] = true,
+        ['(.-)(int)'] = true,
+        ['(.-)(argmax)'] = true,
+        ['(.-)(argmin)'] = true,
+        ['(.-)(max)'] = true,
+        ['(.-)(min)'] = true,
+        ['(.-)(sup)'] = true,
+        ['(.-)(inf)'] = true,
+        ['(.-)(deg)'] = true,
+      },
+      matrices = {
+        ['([bBpvV])mat(%d+)x(%d+)'] = true,
+      },
+      integrals_derivatives = {
+        ['pa([A-Za-z])([A-Za-z])'] = true,
+      },
+      operators = {
+        ['([A-Za-z])(%d)'] = true,       -- auto-subscript
+        ['([A-Za-z])_(%d%d)'] = true,    -- two-digit subscript
+        ['\\hat{([A-Za-z])}(%d)'] = true,
+        ['\\vec{([A-Za-z])}(%d)'] = true,
+        ['\\mathbf{([A-Za-z])}(%d)'] = true,
+      },
+    }
+
+    for cat, set in pairs(regtrig_sets) do
+      if set[trig] then return cat end
+    end
+
+    -- Plain triggers
+    local greek_full = {
+      alpha=true,beta=true,gamma=true,Gamma=true,delta=true,Delta=true,epsilon=true,varepsilon=true,zeta=true,eta=true,
+      theta=true,Theta=true,vartheta=true,iota=true,kappa=true,lambda=true,Lambda=true,mu=true,nu=true,xi=true,Xi=true,
+      pi=true,rho=true,sigma=true,Sigma=true,upsilon=true,Upsilon=true,phi=true,varphi=true,Phi=true,psi=true,Psi=true,
+      omega=true,Omega=true,chi=true,tau=true,
+    }
+    if trig:match('^@') or trig:match('^:') or greek_full[trig] or trig == 'ome' or trig == 'Ome' then
+      return 'greek_letters'
+    end
+
+    local arrows = {
+      ['->']=true,['!>']=true,['=>']=true,['=<']=true,['<->']=true,['-->']=true,
+    }
+    if arrows[trig] or trig == 'xra' or trig == 'xla' then return 'arrows' end
+
+    local envs = {
+      beg=true,pmat=true,bmat=true,Bmat=true,vmat=true,Vmat=true,matrix=true,cases=true,align=true,array=true,
+    }
+    if envs[trig] then return 'environments' end
+
+    local matrices = {
+      [config.snippets.triggers.matrix_column]=true,['&=']=true,
+    }
+    if matrices[trig] then return 'matrices' end
+
+    local brackets = {
+      ['lr(']=true,['lr[']=true,['lr{']=true,['lr|']=true,lra=true,binom=true,brack=true,avg=true,norm=true,Norm=true,ceil=true,floor=true,mod=true,
+    }
+    if brackets[trig] then return 'brackets' end
+
+    local sequences = {
+      seq=true,sumn=true,sumk=true,lim=true,geom=true,arith=true,xnn=true,xjj=true,xp1=true,ynn=true,yii=true,yjj=true,
+    }
+    if sequences[trig] then return 'sequences_series' end
+
+    local integrals = {
+      ddt=true,dint=true,oint=true,oinf=true,infi=true,iint=true,iiint=true,par=true,['\\int']=true,['\\sum']=true,['\\prod']=true,
+    }
+    if integrals[trig] then return 'integrals_derivatives' end
+
+    local physics = {
+      dag=true,['o+']=true,ox=true,bra=true,ket=true,brk=true,outer=true,kbt=true,msun=true,
+    }
+    if physics[trig] then return 'physics' end
+
+    local chemistry = { pu=true, cee=true, he4=true, he3=true, iso=true }
+    if chemistry[trig] then return 'chemistry' end
+
+    local decorators = { hat=true,bar=true,dot=true,ddot=true,tilde=true,und=true,vec=true,mfr=true,deco=true }
+    if decorators[trig] then return 'decorators' end
+
+    local sets_logic = {
+      NN=true,ZZ=true,QQ=true,RR=true,CC=true,PP=true,HH=true,II=true,LL=true,eset=true,
+      ['and']=true,orr=true,inn=true,notin=true,cc=true,qq=true,['sub=']=true,['sup=']=true,AND=true,CUP=true,setm=true,
+      VV=true,WW=true,['!W']=true,['&&']=true,neg=true,iff=true,AA=true,EE=true,['?fa']=true,['?ex']=true,['?tf']=true,['?be']=true,['?qed']=true,['?st']=true,['?ue']=true,set=true,
+    }
+    if sets_logic[trig] then return 'sets_logic' end
+
+    -- Everything else defaults to symbols/operators depending on what it is.
+    local operators = {
+      ['/']=true,['//']=true,sr=true,cb=true,rd=true,us=true,sts=true,sq=true,nsq=true,ee=true,invs=true,conj=true,compl=true,trans=true,Re=true,Im=true,bf=true,rm=true,trace=true,
+      text=true,["'"]=true,
+    }
+    if operators[trig] or trig == 'cfr' then return 'operators' end
+
+    -- Symbols: catch-all for the remaining common ones.
+    return 'symbols'
+  end
+
   local function apply_pipeline(snip_list)
     local disable_set = {}
     for _, trig in ipairs(config.snippets.disable or {}) do
       disable_set[trig] = true
     end
 
+    local cat_enabled = (config.snippets and config.snippets.categories) or {}
+
     local filtered = {}
     for _, snip in ipairs(snip_list) do
-      if not disable_set[snip.trigger] then
+      local trig = snip.trigger
+      local cat = category_for_trigger(trig)
+      local enabled = (cat_enabled[cat] ~= false)
+
+      if enabled and not disable_set[trig] then
         table.insert(filtered, snip)
       end
     end
@@ -884,20 +1052,25 @@ function M.register(config)
   local processed_auto = apply_pipeline(auto_snippets)
   local processed_regular = apply_pipeline(regular_snippets)
 
-  -- mk and dm are markdown-only (plain text condition, not math zone)
-  -- They are not in auto_snippets (which goes to tex too) so skip pipeline for them
-  ls.add_snippets('markdown', { mk_snippet, dm_snippet }, { key = 'latex-tools-md-entry', type = 'autosnippets' })
+  local filetypes = (config.snippets and config.snippets.filetypes) or { 'markdown', 'tex' }
 
-  ls.add_snippets('markdown', processed_auto,    { key = 'latex-tools-auto',     type = 'autosnippets' })
-  ls.add_snippets('markdown', processed_regular, { key = 'latex-tools-regular' })
-  ls.add_snippets('tex',      processed_auto,    { key = 'latex-tools-tex-auto', type = 'autosnippets' })
-  ls.add_snippets('tex',      processed_regular, { key = 'latex-tools-tex-regular' })
+  for _, ft in ipairs(filetypes) do
+    if ft == 'markdown' then
+      -- mk and dm are markdown-only (plain text condition, not math zone)
+      -- They are not in auto_snippets (which may also register to tex), so skip pipeline for them.
+      ls.add_snippets('markdown', { mk_snippet, dm_snippet }, { key = 'latex-tools-md-entry', type = 'autosnippets' })
+    end
 
-  -- User-supplied extra snippets (registered after built-ins, once each for both filetypes)
+    ls.add_snippets(ft, processed_auto,    { key = 'latex-tools-' .. ft .. '-auto', type = 'autosnippets' })
+    ls.add_snippets(ft, processed_regular, { key = 'latex-tools-' .. ft .. '-regular' })
+  end
+
+  -- User-supplied extra snippets (registered after built-ins, once per configured ft)
   local extra = config.snippets.extra or {}
   if #extra > 0 then
-    ls.add_snippets('markdown', extra, { key = 'latex-tools-extra' })
-    ls.add_snippets('tex',      extra, { key = 'latex-tools-tex-extra' })
+    for _, ft in ipairs(filetypes) do
+      ls.add_snippets(ft, extra, { key = 'latex-tools-' .. ft .. '-extra' })
+    end
   end
 end
 

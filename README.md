@@ -86,6 +86,10 @@ require('latex-tools').setup({
   snippets = {
     enabled = true,
 
+    -- Filetypes to register snippets into.
+    -- For a Markdown-first workflow, set { 'markdown' }.
+    filetypes = { 'markdown', 'tex' },
+
     -- Trigger strings for the four named entry points.
     triggers = {
       inline_math   = 'mk',   -- plain text → $...$
@@ -94,7 +98,7 @@ require('latex-tools').setup({
       matrix_column = ',,',   -- matrix env → ' & '
     },
 
-    -- (reserved for future use — category filtering not yet implemented)
+    -- Enable/disable built-in snippet categories.
     categories = {
       greek_letters = true,
       operators = true,
@@ -131,11 +135,11 @@ require('latex-tools').setup({
   visual_wrappers = {
     enabled = true,
     keymaps = {
-      underbrace = '<leader>nu',
-      overbrace  = '<leader>no',
-      cancel     = '<leader>nc',
-      cancelto   = '<leader>nk',
-      underset   = '<leader>nb',
+      underbrace = '<leader>lu',
+      overbrace  = '<leader>lo',
+      cancel     = '<leader>lc',
+      cancelto   = '<leader>lk',
+      underset   = '<leader>lb',
     },
   },
 
@@ -163,6 +167,14 @@ require('latex-tools').setup({
 Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only).
 
 `·` in expansion output marks a cursor / tab-stop position.
+
+### Visual selection defaults
+
+Some snippets will use the current visual selection as their default content (via `LS_SELECT_RAW`) when expanded from a visual-mode snippet workflow. This currently applies to:
+
+- `text` / `'` (`\text{...}`)
+- `box` (`\boxed{...}`)
+- fallback decorator forms (`hat`, `bar`, `dot`, `ddot`, `tilde`, `und`, `vec`, `mfr`)
 
 ### Math Entry (text zone)
 
@@ -242,6 +254,7 @@ Full Greek names also auto-expand (word boundary required):
 |---------|--------|-------|
 | `/` | `\frac{expr}{·}` | Smart: wraps preceding expr as numerator |
 | `//` | `\frac{·}{·}` | Plain fraction (fill both manually) |
+| `cfr` | `\cfrac{num}{den}` | Continued fraction |
 | `sr` | `^{2}` | Square |
 | `cb` | `^{3}` | Cube |
 | `rd` | `^{·}` | General superscript |
@@ -362,6 +375,13 @@ These are regex autosnippets — they fire automatically as you type.
 | `=>` | `\implies` | `=<` | `\impliedby` |
 | `<->` | `\leftrightarrow` | `-->` | `\longrightarrow` |
 
+Extensible arrows:
+
+| Trigger | Output |
+|---------|--------|
+| `xra` | `\xrightarrow{top}` (choice: with optional `[bottom]`) |
+| `xla` | `\xleftarrow{top}` (choice: with optional `[bottom]`) |
+
 ### Integrals / Derivatives (math zone)
 
 | Trigger | Output | Notes |
@@ -378,6 +398,15 @@ These are regex autosnippets — they fire automatically as you type.
 | `\int` | `\int · \, d· ·` | Integral with measure (tab) |
 | `\sum` | `\sum_{·=·}^{·} ·` | Sum with limits (tab) |
 | `\prod` | `\prod_{·=·}^{·} ·` | Product with limits (tab) |
+
+### Align helpers (align/aligned/eqnarray only)
+
+| Trigger | Output |
+|---------|--------|
+| `itr` | `\intertext{...}` |
+| `tag` | `\tag{...}` |
+| `ntg` | `\notag` |
+| `br` | `\\` followed by a newline |
 
 ### Physics (math zone)
 
@@ -542,11 +571,11 @@ Five keymaps wrap a visual selection with a LaTeX annotation command. They only 
 
 | Default keymap | Wraps selection with |
 |---------------|---------------------|
-| `<leader>nu` | `\underbrace{...}_{}` |
-| `<leader>no` | `\overbrace{...}^{}` |
-| `<leader>nc` | `\cancel{...}` |
-| `<leader>nk` | `\cancelto{}{...}` |
-| `<leader>nb` | `\underset{}{...}` |
+| `<leader>lu` | `\underbrace{...}_{}` |
+| `<leader>lo` | `\overbrace{...}^{}` |
+| `<leader>lc` | `\cancel{...}` |
+| `<leader>lk` | `\cancelto{}{...}` |
+| `<leader>lb` | `\underset{}{...}` |
 
 Use visual mode (`v` or `V`), select the expression, then press the keymap.
 
