@@ -11,6 +11,7 @@ Designed for writing math in Markdown (Obsidian-style) and `.tex` files.
 - Neovim 0.10+
 - [LuaSnip](https://github.com/L3MON4D3/LuaSnip)
 - Treesitter `markdown` parser (optional — improves math zone detection, falls back to a line scanner)
+- After install, run **`:checkhealth latex-tools`** to verify Neovim, LuaSnip (including autosnippets), Treesitter parsers, and that `setup()` has run.
 
 ## Installation
 

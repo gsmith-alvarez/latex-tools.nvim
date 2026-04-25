@@ -19,12 +19,14 @@ lua/latex-tools/
   auto_brackets.lua   -- enlarge_enclosing() callback: wraps enclosing ( or [ with \left/\right
   matrix.lua          -- handle_enter() for matrix row separator; consumed by autolist.lua
   visual_wrappers.lua -- <leader>nu/no/nc/nk/nb visual-mode wrappers
+  health.lua          -- :checkhealth latex-tools (Neovim, LuaSnip, TS parsers, setup state)
 plugin/latex-tools.lua  -- intentionally empty; setup() must be called explicitly
 tests/
   minimal_init.lua         -- adds plugin to rtp, loads mini.nvim from ~/.local/share/nvim/lazy/mini.nvim
   test_context.lua         -- math zone + matrix env + code block tests (MiniTest)
   test_math_parser.lua
   test_snippets_register.lua -- stub LuaSnip; filetypes, categories, disable pipeline
+  test_health.lua          -- smoke-test health.check() with stubs / default env
 Makefile              -- `make test` runs all tests headlessly
 ```
 
