@@ -479,19 +479,19 @@ If you type **`\lim`** yourself (backslash then `lim`), the **`lim`** autosnippe
 | `,,` | ` & ` | Any matrix/tabular env |
 | `&=` | `&= ·  \\` (choice: `&=` / `&\leq` / `&\geq`) | align/aligned/eqnarray only |
 
-**Dynamic matrix** (tab-triggered, regular snippet):
+**Dynamic matrix** (autosnippet in math):
 
-Type `<type>mat<rows>x<cols>` to get a pre-filled matrix with a tab stop at every cell.
+Type `<rows>x<cols><type>mat` so a bare `<type>mat` trigger never wins first (e.g. `pmat` still expands to an empty `pmatrix` shell).
 
 | Example trigger | Result |
 |-----------------|--------|
-| `pmat3x3` | 3×3 `pmatrix` |
-| `bmat2x4` | 2×4 `bmatrix` |
-| `Vmat4x4` | 4×4 `Vmatrix` |
+| `3x3pmat` | 3×3 `pmatrix` |
+| `2x4bmat` | 2×4 `bmatrix` |
+| `4x4Vmat` | 4×4 `Vmatrix` |
 
 Valid type letters: `b`, `B`, `p`, `v`, `V` (maps to `b/B/p/v/Vmatrix`).
 
-Tab visits every cell in row-major order. The last cell has no trailing `\\`. One more tab after `\end{…matrix}` jumps past the environment.
+The snippet expands automatically when the pattern is complete. Tab visits every cell in row-major order. The last cell has no trailing `\\`. One more tab after `\end{…matrix}` jumps past the environment.
 
 ## Customizing Triggers
 
@@ -525,7 +525,7 @@ require('latex-tools').setup({
 Snippets that use `regTrig = true` are keyed by their raw Lua pattern string. Check the snippet source to find the exact pattern. Examples:
 
 - Auto-subscript: `'([A-Za-z])(%d)'`
-- Dynamic matrix: `'([bBpvV])mat(%d+)x(%d+)'`
+- Dynamic matrix: `'(%d+)x(%d+)([bBpvV])mat'`
 
 ```lua
 overrides = {

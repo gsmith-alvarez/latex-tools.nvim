@@ -117,7 +117,7 @@ The default config table includes a `categories` subtable (greek_letters, operat
 | "How does `&=` insert `&= \\`?" | `snippets.lua` align shorthand (condition: `in_align_env` from `context.lua`) |
 | "Where's the default keymap for `<leader>nu`?" | `visual_wrappers.lua:setup` |
 | "Why did `(` become `\left(`?" | `auto_brackets.lua:enlarge_enclosing` attached via `enlarge_cb` |
-| "How does `pmat3x3` generate a full matrix?" | `snippets.lua` dynamic matrix (`generate_matrix_body` + `d()`) in `regular_snippets` |
+| "How does `3x3pmat` generate a full matrix?" | `snippets.lua` dynamic matrix autosnippet (`generate_matrix_body` + `d()`) |
 | "Why does `lim` have choices for `limsup`?" | `snippets.lua` unified `lim` with `c()` choice nodes in sequences section |
 
 ## Debugging math zone false negatives

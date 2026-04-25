@@ -95,6 +95,14 @@ function M.register(config)
     end
   end
 
+  --- Avoid expanding bare `pmat` / `bmat` / … when the line ends with `NxM<type>mat` (dynamic matrix autosnippet).
+  local function not_dyn_matrix_autosnip_suffix()
+    local line = vim.api.nvim_get_current_line()
+    local col = vim.api.nvim_win_get_cursor(0)[2]
+    local upto = line:sub(1, math.min(#line, col + 1))
+    return not upto:match('%d+x%d+[bBpvV]mat$')
+  end
+
   -- Check if a trigger is preceded by a backslash or a letter (to avoid double-prefixing)
   local function no_prefix(_, _, captures)
     local c1 = captures[1]
@@ -178,7 +186,7 @@ function M.register(config)
     end
   end
 
-  -- Dynamic matrix body: called by d() in the [bBpvV]mat%dx%d snippet.
+  -- Dynamic matrix body: called by d() in the %dx%d[bBpvV]mat autosnippet.
   -- Generates r() restore nodes at every cell so Tab visits each one.
   local function generate_matrix_body(_, snip)
     local captures = (snip and snip.captures)
@@ -587,12 +595,46 @@ function M.register(config)
       { c(1, { t '&= ', t [[&\leq ]], t [[&\geq ]] }), i(2), t [[ \\]] }
     ),
 
+    -- Dynamic matrix: {rows}x{cols}{type}mat e.g. 3x3pmat → 3×3 pmatrix (auto); Tab visits each cell.
+    sa(
+      {
+        trig = '(%d+)x(%d+)([bBpvV])mat',
+        regTrig = true,
+        wordTrig = false,
+        snippetType = 'autosnippet',
+        condition = in_mathzone,
+        priority = 2000,
+        dscr = [[NxM matrix: 3x3pmat, 2x4bmat, … (auto)]],
+      },
+      {
+        f(function(_, snip) return '\\begin{' .. snip.captures[3] .. 'matrix}\n' end),
+        d(1, generate_matrix_body),
+        f(function(_, snip) return '\n\\end{' .. snip.captures[3] .. 'matrix}' end),
+        i(2),
+      }
+    ),
+
     -- ── ENVIRONMENTS ( mA ) ──────────────────────────────────────────────────────
-    sa({ trig = 'pmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{pmatrix}}\n{}\n\\end{{pmatrix}}{}', { i(1), i(2) })),
-    sa({ trig = 'bmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{bmatrix}}\n{}\n\\end{{bmatrix}}{}', { i(1), i(2) })),
-    sa({ trig = 'Bmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{Bmatrix}}\n{}\n\\end{{Bmatrix}}{}', { i(1), i(2) })),
-    sa({ trig = 'vmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{vmatrix}}\n{}\n\\end{{vmatrix}}{}', { i(1), i(2) })),
-    sa({ trig = 'Vmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{Vmatrix}}\n{}\n\\end{{Vmatrix}}{}', { i(1), i(2) })),
+    sa(
+      { trig = 'pmat', wordTrig = false, condition = all(in_mathzone, not_dyn_matrix_autosnip_suffix) },
+      fmt('\\begin{{pmatrix}}\n{}\n\\end{{pmatrix}}{}', { i(1), i(2) })
+    ),
+    sa(
+      { trig = 'bmat', wordTrig = false, condition = all(in_mathzone, not_dyn_matrix_autosnip_suffix) },
+      fmt('\\begin{{bmatrix}}\n{}\n\\end{{bmatrix}}{}', { i(1), i(2) })
+    ),
+    sa(
+      { trig = 'Bmat', wordTrig = false, condition = all(in_mathzone, not_dyn_matrix_autosnip_suffix) },
+      fmt('\\begin{{Bmatrix}}\n{}\n\\end{{Bmatrix}}{}', { i(1), i(2) })
+    ),
+    sa(
+      { trig = 'vmat', wordTrig = false, condition = all(in_mathzone, not_dyn_matrix_autosnip_suffix) },
+      fmt('\\begin{{vmatrix}}\n{}\n\\end{{vmatrix}}{}', { i(1), i(2) })
+    ),
+    sa(
+      { trig = 'Vmat', wordTrig = false, condition = all(in_mathzone, not_dyn_matrix_autosnip_suffix) },
+      fmt('\\begin{{Vmatrix}}\n{}\n\\end{{Vmatrix}}{}', { i(1), i(2) })
+    ),
     sa({ trig = 'matrix', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{matrix}}\n{}\n\\end{{matrix}}{}', { i(1), i(2) })),
     sa({ trig = 'cases', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{cases}}\n{}\n\\end{{cases}}{}', { i(1), i(2) })),
     sa({ trig = 'align', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{align}}\n{}\n\\end{{align}}{}', { i(1), i(2) })),
@@ -947,23 +989,6 @@ function M.register(config)
     sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}{}]], { i(1), i(2, 'x'), i(3), i(4) })),
     sa({ trig = [[\lim]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\lim_{{ {} \to {} }} {} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3), i(4) })),
-
-    -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
-    sa(
-      {
-        trig = '([bBpvV])mat(%d+)x(%d+)',
-        regTrig = true,
-        wordTrig = false,
-        condition = in_mathzone,
-        dscr = [[NxM matrix: pmat3x3, bmat2x4, … (tab)]],
-      },
-      {
-        f(function(_, snip) return '\\begin{' .. snip.captures[1] .. 'matrix}\n' end),
-        d(1, generate_matrix_body),
-        f(function(_, snip) return '\n\\end{' .. snip.captures[1] .. 'matrix}' end),
-        i(2),
-      }
-    ),
   }
 
   -- ============================================================================
@@ -1000,7 +1025,7 @@ function M.register(config)
         ['(.-)(deg)'] = true,
       },
       matrices = {
-        ['([bBpvV])mat(%d+)x(%d+)'] = true,
+        ['(%d+)x(%d+)([bBpvV])mat'] = true,
       },
       operators = {
         ['([A-Za-z])(%d)'] = true,       -- auto-subscript
