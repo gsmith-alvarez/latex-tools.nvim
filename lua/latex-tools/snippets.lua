@@ -632,11 +632,13 @@ function M.register(config)
     sa({ trig = 'seq', wordTrig = false, condition = in_mathzone }, fmt([[\{{{}_{{{} = {}}}\}}^{{\infty}} {}]], { i(1, 'a_n'), i(2, 'n'), i(3, '1'), i(4) })),
     sa({ trig = 'sumn', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{\infty}} {}]], { i(1, 'n'), i(2, '1'), i(3) })),
     sa({ trig = 'sumk', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'k'), i(2, '1'), i(3, 'n'), i(4) })),
+    -- One choice for the operator token (\lim / \limsup / \liminf). Avoids a bare
+    -- `t(\lim)` plus a second choice of `'' | sup | inf` (concatenation), which can
+    -- confuse Tab/jump order and tooling; each branch is a full command string.
     sa(
       { trig = 'lim', wordTrig = false, condition = all(in_mathzone, no_backslash_immediately_before_match) },
       {
-        t [[\lim]],
-        c(1, { t '', t 'sup', t 'inf' }),
+        c(1, { t [[\lim]], t [[\limsup]], t [[\liminf]] }),
         c(2, {
           t '',
           sn(nil, fmt([[_{{ {} \to {} }}]], { i(1, 'n'), i(2, [[\infty]]) })),

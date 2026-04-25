@@ -455,15 +455,16 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 | `seq` | `\{a_n\}_{n=1}^{\infty} ·` (customisable) |
 | `sumn` | `sum_{n=1}^{\infty} ·` |
 | `sumk` | `sum_{k=1}^{n} ·` |
-| `lim` | Unified limit — choice nodes select `\lim` / `\limsup` / `\liminf` and optional `_{n → ∞}` |
+| `lim` | `\lim` / `\limsup` / `\liminf` (first choice), optional `_{n \to \infty}` (second choice) |
 | `geom` | `a \cdot r^{n-1} ·` (geometric term) |
 | `arith` | `a + (n - 1)d ·` (arithmetic term) |
 
-`lim` expands immediately (auto). Press `<Tab>` through two choice nodes:
-1. Choose operator: `\lim` (default) → `\limsup` → `\liminf`
-2. Choose limits: none (default) → `_{n \to \infty}` (with fill-in tab stops)
+`lim` expands immediately (auto). It has two choice nodes (cycle them with your LuaSnip choice keys, e.g. `<Plug>luasnip-next-choice` — often bound separately from Tab):
 
-A final tab stop sits after the limit expression so you can jump past the whole `\lim` construct.
+1. Operator: `\lim` (default) → `\limsup` → `\liminf` (each branch is the full command, not `\lim` + a suffix).
+2. Limits: none (default) → `_{n \to \infty}` (fill-in tab stops for the variable and target).
+
+Further Tab stops jump past the construct.
 
 Use the bare trigger **`lim`** (no backslash): the snippet inserts `\lim` for you. If you type **`\lim`** yourself (backslash then `lim`), the autosnippet does **not** run on the `lim` suffix, so you never get **`\\lim`** from that overlap.
 
