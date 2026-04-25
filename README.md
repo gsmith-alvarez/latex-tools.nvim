@@ -481,13 +481,15 @@ If you type **`\lim`** yourself (backslash then `lim`), the **`lim`** autosnippe
 
 **Dynamic matrix** (autosnippet in math):
 
-Type `<rows>x<cols><type>mat` so a bare `<type>mat` trigger never wins first (e.g. `pmat` still expands to an empty `pmatrix` shell).
+Type `<rows>*<cols><type>mat` (asterisk between the numbers). An `x` separator would collide with **letter+digit** auto-subscript (`x3` → `x_{3}`) while you type something like `3x3pmat`.
+
+This order keeps a bare `<type>mat` from winning first (e.g. `pmat` still expands to an empty `pmatrix` shell).
 
 | Example trigger | Result |
 |-----------------|--------|
-| `3x3pmat` | 3×3 `pmatrix` |
-| `2x4bmat` | 2×4 `bmatrix` |
-| `4x4Vmat` | 4×4 `Vmatrix` |
+| `3*3pmat` | 3×3 `pmatrix` |
+| `2*4bmat` | 2×4 `bmatrix` |
+| `4*4Vmat` | 4×4 `Vmatrix` |
 
 Valid type letters: `b`, `B`, `p`, `v`, `V` (maps to `b/B/p/v/Vmatrix`).
 
@@ -525,7 +527,7 @@ require('latex-tools').setup({
 Snippets that use `regTrig = true` are keyed by their raw Lua pattern string. Check the snippet source to find the exact pattern. Examples:
 
 - Auto-subscript: `'([A-Za-z])(%d)'`
-- Dynamic matrix: `'(%d+)x(%d+)([bBpvV])mat'`
+- Dynamic matrix: `'(%d+)%*(%d+)([bBpvV])mat'`
 
 ```lua
 overrides = {

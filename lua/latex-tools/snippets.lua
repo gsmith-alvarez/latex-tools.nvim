@@ -95,12 +95,12 @@ function M.register(config)
     end
   end
 
-  --- Avoid expanding bare `pmat` / `bmat` / … when the line ends with `NxM<type>mat` (dynamic matrix autosnippet).
+  --- Avoid expanding bare `pmat` / `bmat` / … when the line ends with `N*M<type>mat` (dynamic matrix autosnippet).
   local function not_dyn_matrix_autosnip_suffix()
     local line = vim.api.nvim_get_current_line()
     local col = vim.api.nvim_win_get_cursor(0)[2]
     local upto = line:sub(1, math.min(#line, col + 1))
-    return not upto:match('%d+x%d+[bBpvV]mat$')
+    return not upto:match('%d+%*%d+[bBpvV]mat$')
   end
 
   -- Check if a trigger is preceded by a backslash or a letter (to avoid double-prefixing)
@@ -186,7 +186,7 @@ function M.register(config)
     end
   end
 
-  -- Dynamic matrix body: called by d() in the %dx%d[bBpvV]mat autosnippet.
+  -- Dynamic matrix body: called by d() in the rows*cols[bBpvV]mat autosnippet.
   -- Generates r() restore nodes at every cell so Tab visits each one.
   local function generate_matrix_body(_, snip)
     local captures = (snip and snip.captures)
@@ -595,16 +595,17 @@ function M.register(config)
       { c(1, { t '&= ', t [[&\leq ]], t [[&\geq ]] }), i(2), t [[ \\]] }
     ),
 
-    -- Dynamic matrix: {rows}x{cols}{type}mat e.g. 3x3pmat → 3×3 pmatrix (auto); Tab visits each cell.
+    -- Dynamic matrix: {rows}*{cols}{type}mat e.g. 3*3pmat → 3×3 pmatrix (auto); Tab visits each cell.
+    -- Uses `*` not `x` so `3x3…` does not fire letter+digit auto-subscript on `x3`.
     sa(
       {
-        trig = '(%d+)x(%d+)([bBpvV])mat',
+        trig = '(%d+)%*(%d+)([bBpvV])mat',
         regTrig = true,
         wordTrig = false,
         snippetType = 'autosnippet',
         condition = in_mathzone,
         priority = 2000,
-        dscr = [[NxM matrix: 3x3pmat, 2x4bmat, … (auto)]],
+        dscr = [[NxM matrix: 3*3pmat, 2*4bmat, … (auto)]],
       },
       {
         f(function(_, snip) return '\\begin{' .. snip.captures[3] .. 'matrix}\n' end),
@@ -1025,7 +1026,7 @@ function M.register(config)
         ['(.-)(deg)'] = true,
       },
       matrices = {
-        ['(%d+)x(%d+)([bBpvV])mat'] = true,
+        ['(%d+)%*(%d+)([bBpvV])mat'] = true,
       },
       operators = {
         ['([A-Za-z])(%d)'] = true,       -- auto-subscript

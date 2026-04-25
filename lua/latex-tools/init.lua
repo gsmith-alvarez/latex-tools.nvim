@@ -32,7 +32,7 @@ local defaults = {
       trig_functions = true,
     },
     -- Remap trigger strings for built-in snippets.
-    -- Key: existing trigger string (exact, or raw Lua pattern for regTrig snippets), e.g. dynamic matrix `'(%d+)x(%d+)([bBpvV])mat'`.
+    -- Key: existing trigger string (exact, or raw Lua pattern for regTrig snippets), e.g. dynamic matrix `'(%d+)%*(%d+)([bBpvV])mat'`.
     -- Value: fields to replace — only trig/wordTrig/regTrig; body/nodes cannot change.
     -- Does not apply to snippets in `extra`.
     overrides = {},
