@@ -462,7 +462,7 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 `lim` expands immediately (auto). It has two choice nodes (cycle them with your LuaSnip choice keys, e.g. `<Plug>luasnip-next-choice` — often bound separately from Tab):
 
 1. Operator: `\lim` (default) → `\limsup` → `\liminf` (each branch is the full command, not `\lim` + a suffix).
-2. Limits: none (default) → `_{n \to \infty}` (fill-in tab stops for the variable and target).
+2. Limits: **none** (two empty tab slots that expand to nothing, so `change_choice` stays valid) → **`_{n \to \infty}`** (same two tab stops, defaults `n` and `\infty`).
 
 Further Tab stops jump past the construct.
 
