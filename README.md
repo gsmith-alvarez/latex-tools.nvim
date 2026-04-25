@@ -465,6 +465,8 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 
 A final tab stop sits after the limit expression so you can jump past the whole `\lim` construct.
 
+Use the bare trigger **`lim`** (no backslash): the snippet inserts `\lim` for you. If you type **`\lim`** yourself (backslash then `lim`), the autosnippet does **not** run on the `lim` suffix, so you never get **`\\lim`** from that overlap.
+
 **Misc subscript shorthands:**
 
 | Trigger | Output | Trigger | Output |

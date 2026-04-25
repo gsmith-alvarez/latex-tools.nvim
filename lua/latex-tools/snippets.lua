@@ -57,8 +57,11 @@ function M.register(config)
 
   local in_mathzone = context.is_in_mathzone
 
-  --- Reject `par` when it is the suffix of `\par` (e.g. typing `\partial`).
-  local function par_not_after_backslash(line_to_cursor, matched_trigger)
+  --- If the matched trigger is immediately preceded by `\`, skip expansion.
+  --- Avoids: (1) `\partial` firing the `par` autosnippet on the `par` suffix;
+  --- (2) typing `\lim` manually then having the `lim` autosnippet replace `lim`
+  ---     with `\lim`, leaving `\\lim`.
+  local function no_backslash_immediately_before_match(line_to_cursor, matched_trigger)
     if not line_to_cursor or not matched_trigger then return true end
     local len = #line_to_cursor
     local tlen = #matched_trigger
@@ -241,7 +244,7 @@ function M.register(config)
   local dm_snippet = s(
     { trig = config.snippets.triggers.display_math, wordTrig = true,
       snippetType = 'autosnippet', condition = is_plain_text },
-    fmt('$$\n{}\n$$ {}', { i(1), i(2) })
+    fmt('$$\n{}\n$${}', { i(1), i(2) })
   )
 
   -- ==========================================================================
@@ -549,7 +552,7 @@ function M.register(config)
         trig = 'par',
         wordTrig = true,
         snippetType = 'autosnippet',
-        condition = all(in_mathzone, par_not_after_backslash),
+        condition = all(in_mathzone, no_backslash_immediately_before_match),
         callbacks = enlarge_cb,
         dscr = [[\frac{\partial ·}{\partial ·} (auto)]],
       },
@@ -630,7 +633,7 @@ function M.register(config)
     sa({ trig = 'sumn', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{\infty}} {}]], { i(1, 'n'), i(2, '1'), i(3) })),
     sa({ trig = 'sumk', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'k'), i(2, '1'), i(3, 'n'), i(4) })),
     sa(
-      { trig = 'lim', wordTrig = false, condition = in_mathzone },
+      { trig = 'lim', wordTrig = false, condition = all(in_mathzone, no_backslash_immediately_before_match) },
       {
         t [[\lim]],
         c(1, { t '', t 'sup', t 'inf' }),
