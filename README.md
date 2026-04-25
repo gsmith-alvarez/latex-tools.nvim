@@ -396,6 +396,7 @@ Extensible arrows:
 | `ddt` | `\frac{d}{dt} ·` | Time derivative (auto) |
 | `par` | `\frac{ \partial · }{ \partial · } · ·` | Partial derivative (**auto** in math; `wordTrig` + skips `\par…` for `\partial`) |
 | `\int` | `\int · \, d· · ·` | Integral with measure (tab) |
+| `\lim` | `\lim_{· \to ·} · ·` | After typing `\lim`, Tab for limits (defaults `n`, `\infty`) |
 | `\sum` | `\sum_{·=·}^{·} · ·` | Sum with limits (tab) |
 | `\prod` | `\prod_{·=·}^{·} · ·` | Product with limits (tab) |
 
@@ -455,11 +456,13 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 | `seq` | `\{a_n\}_{n=1}^{\infty} ·` (customisable) |
 | `sumn` | `sum_{n=1}^{\infty} ·` |
 | `sumk` | `sum_{k=1}^{n} ·` |
-| `lim` | `\lim_{· \to ·} · ·` | Limit defaults `n`, `\infty`; Tab through, then past the construct |
+| `lim` | `\lim` | Auto (text only); then **Tab** on `\lim` for the regular `_{·\to·}` snippet (like `\int` + Tab) |
 | `geom` | `a \cdot r^{n-1} ·` (geometric term) |
 | `arith` | `a + (n - 1)d ·` (arithmetic term) |
 
-`lim` expands immediately (auto) to **`\lim_{n \to \infty}`** (defaults you can overwrite). Tab order: index variable → target (`\infty` by default) → continuation after the subscript → final jump-out.
+**Limit (two steps, like integral):** **`lim`** (auto) inserts plain **`\lim`** (no inner tab stops). For **`_{n \to \infty}`** (editable), press **Tab** with the cursor on **`\lim`** to expand the **regular** snippet **`\lim_{· \to ·} · ·`** (same idea as **`\int`** then Tab for **`\int … \, d· …`**).
+
+If you type **`\lim`** yourself (backslash then `lim`), the **`lim`** autosnippet does **not** run on the `lim` suffix, so you never get **`\\lim`** from that overlap.
 
 **Misc subscript shorthands:**
 
@@ -557,7 +560,7 @@ When a snippet that produces `\frac`, `\int`, or `\sum` is triggered inside an e
 (x + y/  →  \left(x + \frac{x+y}{·}\right)
 ```
 
-The enlargement fires for: `/` (smart fraction), `ddt`, `dint`, `oinf`, `infi`, `\int`, `\sum`, `\prod`, `par`, `lim`.
+The enlargement fires for: `/` (smart fraction), `ddt`, `dint`, `oinf`, `infi`, `\int`, `\lim`, `\sum`, `\prod`, `par`, `lim` (bare `lim` → `\lim`).
 
 **Conditions:**
 - Both the opening and matching closing bracket must already exist on the same line.

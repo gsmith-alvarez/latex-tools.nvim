@@ -92,7 +92,7 @@ callbacks = { [-1] = { [events.enter] = auto_brackets.enlarge_enclosing } }
 
 It fires when the snippet is first entered (just expanded, cursor at first insert node). It scans the current line for the innermost unmatched `(` or `[` to the left of the cursor, finds its matching close bracket, and replaces both with `\left(`/`\right)` (or `\left[`/`\right]`). The buffer edit is deferred via `vim.schedule` so LuaSnip can finish wiring extmarks first.
 
-Snippets that get `enlarge_cb`: `/` (smart frac), `ddt`, `dint`, `oinf`, `infi`, `\sum`, `\prod`, `\int`, `par`, `lim`.
+Snippets that get `enlarge_cb`: `/` (smart frac), `ddt`, `dint`, `oinf`, `infi`, `\sum`, `\prod`, `\int`, `\lim`, `par`, `lim` (bare `lim` → `\lim` only).
 
 `auto_brackets` is intentionally NOT exported from `init.lua` — it is internal to `snippets.lua`. External callers should not depend on it.
 

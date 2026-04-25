@@ -632,7 +632,8 @@ function M.register(config)
     sa({ trig = 'seq', wordTrig = false, condition = in_mathzone }, fmt([[\{{{}_{{{} = {}}}\}}^{{\infty}} {}]], { i(1, 'a_n'), i(2, 'n'), i(3, '1'), i(4) })),
     sa({ trig = 'sumn', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{\infty}} {}]], { i(1, 'n'), i(2, '1'), i(3) })),
     sa({ trig = 'sumk', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'k'), i(2, '1'), i(3, 'n'), i(4) })),
-    -- Plain `\lim_{· \to ·}` + tail stops (no choice nodes; Tab through like `\int`).
+    -- `lim` → `\lim` (auto, text only so the next Tab can expand the regular `\lim` snippet).
+    -- Same two-step idea as `int` → `\int` (regex) then `\int` + Tab for the measure form.
     sa(
       {
         trig = 'lim',
@@ -640,7 +641,7 @@ function M.register(config)
         condition = all(in_mathzone, no_backslash_immediately_before_match),
         callbacks = enlarge_cb,
       },
-      fmt([[\lim_{{ {} \to {} }} {} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3), i(4) })
+      { t [[\lim]] }
     ),
     sa({ trig = 'geom', wordTrig = false, condition = in_mathzone }, fmt([[{} \cdot {}^{{{}-1}} {}]], { i(1, 'a'), i(2, 'r'), i(3, 'n'), i(4) })),
     sa({ trig = 'arith', wordTrig = false, condition = in_mathzone }, fmt([[{} + ({} - 1){} {}]], { i(1, 'a'), i(2, 'n'), i(3, 'd'), i(4) })),
@@ -945,6 +946,7 @@ function M.register(config)
     sa({ trig = [[\sum]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\sum_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}{}]], { i(1), i(2, 'x'), i(3), i(4) })),
+    sa({ trig = [[\lim]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\lim_{{ {} \to {} }} {} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3), i(4) })),
 
     -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
     sa(
@@ -1050,7 +1052,7 @@ function M.register(config)
     if sequences[trig] then return 'sequences_series' end
 
     local integrals = {
-      ddt=true,dint=true,oint=true,oinf=true,infi=true,iint=true,iiint=true,par=true,['\\int']=true,['\\sum']=true,['\\prod']=true,
+      ddt=true,dint=true,oint=true,oinf=true,infi=true,iint=true,iiint=true,par=true,['\\int']=true,['\\lim']=true,['\\sum']=true,['\\prod']=true,
     }
     if integrals[trig] then return 'integrals_derivatives' end
 
