@@ -165,8 +165,27 @@ function M.register(config)
   -- Dynamic matrix body: called by d() in the [bBpvV]mat%dx%d snippet.
   -- Generates r() restore nodes at every cell so Tab visits each one.
   local function generate_matrix_body(_, snip)
-    local rows = tonumber(snip.captures[2])
-    local cols = tonumber(snip.captures[3])
+    local captures = (snip and snip.captures)
+      or (snip and snip.snippet and snip.snippet.captures)
+      or {}
+
+    -- Be robust to trigger overrides that may change capture positions.
+    -- We use the first two numeric captures as rows/cols.
+    local numeric = {}
+    for _, cap in ipairs(captures) do
+      local n = tonumber(cap)
+      if n then
+        table.insert(numeric, n)
+      end
+    end
+
+    local rows = numeric[1]
+    local cols = numeric[2]
+    if not rows or not cols or rows < 1 or cols < 1 then
+      -- Graceful fallback: keep snippet expandable without crashing LuaSnip.
+      return sn(nil, { i(1) })
+    end
+
     local nodes = {}
     local ins_indx = 1
     for j = 1, rows do
