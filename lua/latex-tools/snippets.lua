@@ -58,6 +58,9 @@ function M.register(config)
     local ok, _ = context.is_in_matrix_env()
     return ok
   end
+  local function in_align_env()
+    return context.is_in_align_env()
+  end
 
   local function all(...)
     local conditions = { ... } -- Capture all arguments into a table
@@ -155,6 +158,27 @@ function M.register(config)
         },
       }
     end
+  end
+
+  -- Dynamic matrix body: called by d() in the [bBpvV]mat%dx%d snippet.
+  -- Generates r() restore nodes at every cell so Tab visits each one.
+  local function generate_matrix_body(_, snip)
+    local rows = tonumber(snip.captures[2])
+    local cols = tonumber(snip.captures[3])
+    local nodes = {}
+    local ins_indx = 1
+    for j = 1, rows do
+      table.insert(nodes, r(ins_indx, tostring(j) .. 'x1', i(1)))
+      ins_indx = ins_indx + 1
+      for k = 2, cols do
+        table.insert(nodes, t ' & ')
+        table.insert(nodes, r(ins_indx, tostring(j) .. 'x' .. tostring(k), i(1)))
+        ins_indx = ins_indx + 1
+      end
+      table.insert(nodes, t { '\\\\', '' })
+    end
+    nodes[#nodes] = t '\\\\'
+    return sn(nil, nodes)
   end
 
   -- mk and dm: plain text → math entry (markdown-only, not added to auto_snippets)
@@ -259,6 +283,8 @@ function M.register(config)
     sa({ trig = 'Psi',        wordTrig = true, condition = in_mathzone }, t [[\Psi]]),
     sa({ trig = 'omega',      wordTrig = true, condition = in_mathzone }, t [[\omega]]),
     sa({ trig = 'Omega',      wordTrig = true, condition = in_mathzone }, t [[\Omega]]),
+    sa({ trig = 'chi',        wordTrig = true, condition = in_mathzone }, t [[\chi]]),
+    sa({ trig = 'tau',        wordTrig = true, condition = in_mathzone }, t [[\tau]]),
 
     -- ── TEXT ENVIRONMENT ( mA ) ──────────────────────────────────────────────────
     sa({ trig = 'text', wordTrig = false, condition = in_mathzone }, fmt([[\text{<>}<>]], { i(1), i(2) }, { delimiters = '<>' })),
@@ -295,6 +321,8 @@ function M.register(config)
     sa({ trig = 'ee', wordTrig = false, condition = in_mathzone }, fmt([[e^{{ {} }}{}]], { i(1), i(2) })),
     sa({ trig = 'invs', wordTrig = false, condition = in_mathzone }, t '^{-1}'),
     sa({ trig = 'conj', wordTrig = false, condition = in_mathzone }, t '^{*}'),
+    sa({ trig = 'compl', wordTrig = false, condition = in_mathzone }, t '^{c}'),
+    sa({ trig = 'trans', wordTrig = false, condition = in_mathzone }, t '^{T}'),
     sa({ trig = 'Re', wordTrig = false, condition = in_mathzone }, t [[\mathrm{Re}]]),
     sa({ trig = 'Im', wordTrig = false, condition = in_mathzone }, t [[\mathrm{Im}]]),
     sa({ trig = 'bf', wordTrig = false, condition = in_mathzone }, fmt([[\mathbf{{{}}}]], { i(1) })),
@@ -323,6 +351,22 @@ function M.register(config)
     sa({ trig = 'sim=', wordTrig = false, condition = in_mathzone }, t [[\simeq]]),
     sa({ trig = 'prop', wordTrig = false, condition = in_mathzone }, t [[\propto]]),
     sa({ trig = '~~', wordTrig = false, condition = in_mathzone }, t [[\approx]]),
+    sa({ trig = '-~', wordTrig = false, condition = in_mathzone }, t [[\backsimeq]]),
+    sa({ trig = '=~', wordTrig = false, condition = in_mathzone }, t [[\cong]]),
+    sa({ trig = ':=', wordTrig = false, condition = in_mathzone }, t [[\coloneqq]]),
+    sa({ trig = 'dp', wordTrig = false, condition = in_mathzone }, t [[\partial]]),
+    sa({ trig = 'lll', wordTrig = false, condition = in_mathzone }, t [[\ell]]),
+    sa({ trig = '::', wordTrig = false, condition = in_mathzone }, t [[\colon]]),
+    sa({ trig = 'VV', wordTrig = false, condition = in_mathzone }, t [[\lor]]),
+    sa({ trig = 'WW', wordTrig = false, condition = in_mathzone }, t [[\land]]),
+    sa({ trig = '!W', wordTrig = false, condition = in_mathzone }, t [[\bigwedge]]),
+    sa({ trig = 'setm', wordTrig = false, condition = in_mathzone }, t [[\setminus]]),
+    sa({ trig = 'cc', wordTrig = false, condition = in_mathzone }, t [[\subset]]),
+    sa({ trig = 'qq', wordTrig = false, condition = in_mathzone }, t [[\supset]]),
+    sa({ trig = 'upar', wordTrig = false, condition = in_mathzone }, t [[\uparrow]]),
+    sa({ trig = 'dnar', wordTrig = false, condition = in_mathzone }, t [[\downarrow]]),
+    sa({ trig = '-->', wordTrig = false, condition = in_mathzone, priority = 1100 }, t [[\longrightarrow]]),
+    sa({ trig = 'perp', wordTrig = false, condition = in_mathzone }, t [[\perp]]),
 
     -- ── ARROWS ( mA ) ────────────────────────────────────────────────────────────
     sa({ trig = '<->', wordTrig = false, condition = in_mathzone }, t [[\leftrightarrow ]]),
@@ -339,7 +383,17 @@ function M.register(config)
     sa({ trig = 'sub=', wordTrig = false, condition = in_mathzone }, t [[\subseteq]]),
     sa({ trig = 'sup=', wordTrig = false, condition = in_mathzone }, t [[\supseteq]]),
     sa({ trig = 'eset', wordTrig = false, condition = in_mathzone }, t [[\emptyset]]),
-    sa({ trig = 'set', wordTrig = false, condition = in_mathzone }, fmt([[\{{ {} \}}{}]], { i(1), i(2) })),
+    sa(
+      { trig = 'set', wordTrig = false, condition = in_mathzone },
+      {
+        c(1, {
+          sn(nil, { t [[\{]], r(1, 'set_expr', i(nil, 'x')), t [[ \}]] }),
+          sn(nil, { t [[\{]], r(1, 'set_expr'), t [[ \mid ]], i(2), t [[ \}]] }),
+          sn(nil, { t [[\{]], r(1, 'set_expr'), t [[ \colon ]], i(2), t [[ \}]] }),
+        }, { restore_cursor = true }),
+        i(2),
+      }
+    ),
     sa({ trig = '&&', wordTrig = false, condition = in_mathzone }, t [[\quad \land \quad]]),
     sa({ trig = 'LL', wordTrig = false, condition = in_mathzone }, t [[\mathcal{L}]]),
     sa({ trig = 'NN', wordTrig = false, condition = in_mathzone }, t [[\mathbb{N}]]),
@@ -350,6 +404,8 @@ function M.register(config)
     sa({ trig = 'PP', wordTrig = false, condition = in_mathzone }, t [[\mathbb{P}]]),
     sa({ trig = 'HH', wordTrig = false, condition = in_mathzone }, t [[\mathbb{H}]]),
     sa({ trig = 'II', wordTrig = false, condition = in_mathzone }, fmt([[\mathbb{{{}}}]], { i(1) })),
+    sa({ trig = 'AND', wordTrig = false, condition = in_mathzone }, t [[\bigcap]]),
+    sa({ trig = 'CUP', wordTrig = false, condition = in_mathzone }, t [[\bigcup]]),
 
     -- ── LOGICAL ARGUMENTS ( mA ) ──────────────────────────────────────────────────
     sa({ trig = '?fa', wordTrig = false, condition = in_mathzone }, fmt([[\forall {}]], { i(1) })),
@@ -361,6 +417,8 @@ function M.register(config)
     sa({ trig = '?st', wordTrig = false, condition = in_mathzone }, t [[\text{ s.t. }]]),
     sa({ trig = '?ue', wordTrig = false, condition = in_mathzone }, fmt([[\exists! {}]], { i(1) })),
     sa({ trig = 'iff', wordTrig = false, condition = in_mathzone }, t [[\iff]]),
+    sa({ trig = 'AA', wordTrig = false, condition = in_mathzone }, t [[\forall]]),
+    sa({ trig = 'EE', wordTrig = false, condition = in_mathzone }, t [[\exists]]),
 
     -- ── DECORATORS ( mA, no word boundary ) ──────────────────────────────────────
     -- NOTE: These plain fmt-based decorators are INTENTIONAL fallbacks.
@@ -377,6 +435,7 @@ function M.register(config)
     sa({ trig = 'tilde', wordTrig = false, condition = in_mathzone }, fmt([[\tilde{{{}}}{}]], { i(1), i(2) })),
     sa({ trig = 'und', wordTrig = false, condition = in_mathzone }, fmt([[\underline{{{}}}{}]], { i(1), i(2) })),
     sa({ trig = 'vec', wordTrig = false, condition = in_mathzone }, fmt([[\vec{{{}}}{}]], { i(1), i(2) })),
+    sa({ trig = 'mfr', wordTrig = false, condition = in_mathzone }, fmt([[\mathfrak{{{}}}{}]], { i(1), i(2) })),
     sa(
       { trig = 'deco', wordTrig = true, condition = in_mathzone },
       {
@@ -432,6 +491,11 @@ function M.register(config)
     -- Matrix column separator: use double-comma to insert ' & '.
     -- Single comma should remain a literal comma; do not autosnippet it.
     sa({ trig = config.snippets.triggers.matrix_column, wordTrig = false, snippetType = 'autosnippet', condition = in_matrix_env, priority = 2000 }, t(' & ')),
+    -- Align row operator: &= (or &\leq / &\geq) with trailing row separator.
+    -- Only fires inside align/aligned/eqnarray environments (not pmatrix etc.).
+    sa({ trig = '&=', wordTrig = false, condition = all(in_mathzone, in_align_env) },
+      { c(1, { t '&= ', t [[&\leq ]], t [[&\geq ]] }), i(2), t [[ \\]] }
+    ),
 
     -- ── ENVIRONMENTS ( mA ) ──────────────────────────────────────────────────────
     sa({ trig = 'pmat', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{pmatrix}}\n{}\n\\end{{pmatrix}}', { i(1) })),
@@ -443,9 +507,12 @@ function M.register(config)
     sa({ trig = 'cases', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{cases}}\n{}\n\\end{{cases}}', { i(1) })),
     sa({ trig = 'align', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{align}}\n{}\n\\end{{align}}', { i(1) })),
     sa({ trig = 'array', wordTrig = false, condition = in_mathzone }, fmt('\\begin{{array}}\n{}\n\\end{{array}}', { i(1) })),
+    sa({ trig = 'box', wordTrig = false, condition = in_mathzone }, fmt([[\boxed{{{}}}{}]], { i(1), i(2) })),
+    sa({ trig = 'subst', wordTrig = false, condition = in_mathzone }, fmt([[\substack{{{}}}{}]], { i(1), i(2) })),
 
     -- ── BRACKETS ( mA ) ──────────────────────────────────────────────────────────
     sa({ trig = 'avg', wordTrig = false, condition = in_mathzone }, fmt([[\langle {} \rangle {}]], { i(1), i(2) })),
+    sa({ trig = 'binom', wordTrig = false, condition = in_mathzone }, fmt([[\binom{{{}}}{{{}}}{}]], { i(1), i(2), i(3) })),
     sa({ trig = 'norm', wordTrig = false, condition = in_mathzone }, fmt([[\lvert {} \rvert {}]], { i(1), i(2) })),
     sa({ trig = 'Norm', wordTrig = false, condition = in_mathzone }, fmt([[\lVert {} \rVert {}]], { i(1), i(2) })),
     sa({ trig = 'ceil', wordTrig = false, condition = in_mathzone }, fmt([[\lceil {} \rceil {}]], { i(1), i(2) })),
@@ -474,9 +541,18 @@ function M.register(config)
     sa({ trig = 'seq', wordTrig = false, condition = in_mathzone }, fmt([[\{{{}_{{{} = {}}}\}}^{{\infty}} {}]], { i(1, 'a_n'), i(2, 'n'), i(3, '1'), i(4) })),
     sa({ trig = 'sumn', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{\infty}} {}]], { i(1, 'n'), i(2, '1'), i(3) })),
     sa({ trig = 'sumk', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'k'), i(2, '1'), i(3, 'n'), i(4) })),
-    sa({ trig = 'limn', wordTrig = false, condition = in_mathzone }, fmt([[\lim_{{{} \to \infty}} {}]], { i(1, 'n'), i(2) })),
-    sa({ trig = 'limsup', wordTrig = false, condition = in_mathzone }, fmt([[\limsup_{{{} \to \infty}} {}]], { i(1, 'n'), i(2) })),
-    sa({ trig = 'liminf', wordTrig = false, condition = in_mathzone }, fmt([[\liminf_{{{} \to \infty}} {}]], { i(1, 'n'), i(2) })),
+    sa(
+      { trig = 'lim', wordTrig = false, condition = in_mathzone },
+      {
+        t [[\lim]],
+        c(1, { t '', t 'sup', t 'inf' }),
+        c(2, {
+          t '',
+          sn(nil, fmt([[_{{ {} \to {} }}]], { i(1, 'n'), i(2, [[\infty]]) })),
+        }),
+        i(3),
+      }
+    ),
     sa({ trig = 'geom', wordTrig = false, condition = in_mathzone }, fmt([[{} \cdot {}^{{{}-1}} {}]], { i(1, 'a'), i(2, 'r'), i(3, 'n'), i(4) })),
     sa({ trig = 'arith', wordTrig = false, condition = in_mathzone }, fmt([[{} + ({} - 1){} {}]], { i(1, 'a'), i(2, 'n'), i(3, 'd'), i(4) })),
 
@@ -577,6 +653,14 @@ function M.register(config)
         return snip.captures[1] .. [[\int]]
       end)
     ),
+    -- Math operators (argmax/argmin before max/min so no_prefix blocks the shorter match inside them)
+    sa({ trig = '(.-)(argmax)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\argmax]] end)),
+    sa({ trig = '(.-)(argmin)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\argmin]] end)),
+    sa({ trig = '(.-)(max)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\max]] end)),
+    sa({ trig = '(.-)(min)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\min]] end)),
+    sa({ trig = '(.-)(sup)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\sup]] end)),
+    sa({ trig = '(.-)(inf)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\inf]] end)),
+    sa({ trig = '(.-)(deg)', regTrig = true, wordTrig = false, condition = all(in_mathzone, no_prefix) }, f(function(_, snip) return snip.captures[1] .. [[\deg]] end)),
 
     -- ── REGEX AUTOSNIPPETS ( mA, no word boundary ) ───────────────────────────────
     -- Auto letter subscript: x2 → x_{2}
@@ -751,7 +835,15 @@ function M.register(config)
     sa({ trig = [[\sum]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
     sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4) })),
     sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
-    sa({ trig = 'lim', wordTrig = false, condition = in_mathzone }, fmt([[\lim_{{ {} \to {} }} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3) })),
+    -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
+    sa(
+      { trig = '([bBpvV])mat(%d+)x(%d+)', regTrig = true, wordTrig = false, condition = in_mathzone },
+      {
+        f(function(_, snip) return '\\begin{' .. snip.captures[1] .. 'matrix}\n' end),
+        d(1, generate_matrix_body),
+        f(function(_, snip) return '\n\\end{' .. snip.captures[1] .. 'matrix}' end),
+      }
+    ),
 
     -- Partial derivatives
     sa({ trig = 'par', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}]], { i(1, 'y'), i(2, 'x'), i(3) })),

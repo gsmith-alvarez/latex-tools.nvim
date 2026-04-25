@@ -185,6 +185,8 @@ Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) 
 | `cases` | `\begin{cases}\n·\n\end{cases}` |
 | `align` | `\begin{align}\n·\n\end{align}` |
 | `array` | `\begin{array}\n·\n\end{array}` |
+| `box` | `\boxed{·}` |
+| `subst` | `\substack{·}` |
 | `text` | `\text{·}·` |
 | `'` | `\text{·}·` (shorthand for `text`) |
 
@@ -232,6 +234,7 @@ Full Greek names also auto-expand (word boundary required):
 | `varphi` | `\varphi` | `Phi` | `\Phi` |
 | `psi` | `\psi` | `Psi` | `\Psi` |
 | `omega` | `\omega` | `Omega` | `\Omega` |
+| `chi` | `\chi` | `tau` | `\tau` |
 
 ### Operators (math zone)
 
@@ -246,6 +249,8 @@ Full Greek names also auto-expand (word boundary required):
 | `sts` | `_\text{·}` | Text subscript |
 | `invs` | `^{-1}` | Inverse |
 | `conj` | `^{*}` | Conjugate |
+| `compl` | `^{c}` | Set complement |
+| `trans` | `^{T}` | Transpose |
 | `sq` | `\sqrt{· ·}` | Square root |
 | `nsq` | `\sqrt[·]{·}` | nth root |
 | `ee` | `e^{ · }` | Exponential |
@@ -268,6 +273,7 @@ These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
 | `tilde` | `\tilde{...}` |
 | `und` | `\underline{...}` |
 | `vec` | `\vec{...}` |
+| `mfr` | `\mathfrak{...}` |
 | `deco` | choice menu: hat/bar/dot/ddot/tilde/vec/underline |
 
 ### Auto-subscript (math zone)
@@ -293,13 +299,17 @@ These are regex autosnippets — they fire automatically as you type.
 | `<=` | `\leq` | `>>` | `\gg` |
 | `<<` | `\ll` | `simm` | `\sim` |
 | `sim=` | `\simeq` | `prop` | `\propto` |
-| `~~` | `\approx` | `norm` | `\lvert...\rvert` |
-| `Norm` | `\lVert...\rVert` | `avg` | `\langle...\rangle` |
-| `ceil` | `\lceil...\rceil` | `floor` | `\lfloor...\rfloor` |
-| `mod` | `\|...\|` | `inn` | `\in` |
-| `notin` | `\not\in` | `dag` | `^\dagger` |
-| `o+` | `\oplus` | `ox` | `\otimes` |
-| `cdot` | `\cdot` | | |
+| `~~` | `\approx` | `-~` | `\backsimeq` |
+| `=~` | `\cong` | `:=` | `\coloneqq` |
+| `dp` | `\partial` | `lll` | `\ell` |
+| `::` | `\colon` | `perp` | `\perp` |
+| `upar` | `\uparrow` | `dnar` | `\downarrow` |
+| `norm` | `\lvert...\rvert` | `Norm` | `\lVert...\rVert` |
+| `avg` | `\langle...\rangle` | `ceil` | `\lceil...\rceil` |
+| `floor` | `\lfloor...\rfloor` | `mod` | `\|...\|` |
+| `inn` | `\in` | `notin` | `\not\in` |
+| `dag` | `^\dagger` | `o+` | `\oplus` |
+| `ox` | `\otimes` | `cdot` | `\cdot` |
 
 ### Sets / Logic (math zone)
 
@@ -311,14 +321,26 @@ These are regex autosnippets — they fire automatically as you type.
 | `HH` | `\mathbb{H}` | `II` | `\mathbb{·}` |
 | `LL` | `\mathcal{L}` | `eset` | `\emptyset` |
 | `and` | `\cap` | `orr` | `\cup` |
-| `inn` | `\in` | `notin` | `\not\in` |
+| `cc` | `\subset` | `qq` | `\supset` |
 | `sub=` | `\subseteq` | `sup=` | `\supseteq` |
-| `set` | `\{ · \}` | `&&` | `\quad \land \quad` |
-| `neg` | `\neg` | `iff` | `\iff` |
-| `?fa` | `\forall ·` | `?ex` | `\exists ·` |
-| `?ue` | `\exists! ·` | `?tf` | `\therefore ·` |
-| `?be` | `\because ·` | `?qed` | `\square` |
-| `?st` | `\text{ s.t. }` | | |
+| `AND` | `\bigcap` | `CUP` | `\bigcup` |
+| `setm` | `\setminus` | `inn` | `\in` |
+| `notin` | `\not\in` | `VV` | `\lor` |
+| `WW` | `\land` | `!W` | `\bigwedge` |
+| `&&` | `\quad \land \quad` | `neg` | `\neg` |
+| `iff` | `\iff` | `AA` | `\forall` |
+| `EE` | `\exists` | `?fa` | `\forall ·` |
+| `?ex` | `\exists ·` | `?ue` | `\exists! ·` |
+| `?tf` | `\therefore ·` | `?be` | `\because ·` |
+| `?qed` | `\square` | `?st` | `\text{ s.t. }` |
+
+`set` — choice node with three forms:
+
+| Choice | Output |
+|--------|--------|
+| 1 (default) | `\{x\}` |
+| 2 | `\{x \mid y\}` |
+| 3 | `\{x \colon y\}` |
 
 ### Brackets (math zone)
 
@@ -329,6 +351,7 @@ These are regex autosnippets — they fire automatically as you type.
 | `lr{` | `\left\{ · \right\}` |
 | `lr\|` | `\left\| · \right\|` |
 | `lra` | `\left< · \right>` |
+| `binom` | `\binom{·}{·}` |
 | `brack` | choice menu: `()`, `[]`, `{}`, `<>`, `\|`, `\|\|` |
 
 ### Arrows (math zone)
@@ -337,7 +360,7 @@ These are regex autosnippets — they fire automatically as you type.
 |---------|--------|---------|--------|
 | `->` | `\to` | `!>` | `\mapsto` |
 | `=>` | `\implies` | `=<` | `\impliedby` |
-| `<->` | `\leftrightarrow` | | |
+| `<->` | `\leftrightarrow` | `-->` | `\longrightarrow` |
 
 ### Integrals / Derivatives (math zone)
 
@@ -355,7 +378,6 @@ These are regex autosnippets — they fire automatically as you type.
 | `\int` | `\int · \, d· ·` | Integral with measure (tab) |
 | `\sum` | `\sum_{·=·}^{·} ·` | Sum with limits (tab) |
 | `\prod` | `\prod_{·=·}^{·} ·` | Product with limits (tab) |
-| `lim` | `\lim_{ · \to · } ·` | Limit (tab) |
 
 ### Physics (math zone)
 
@@ -388,6 +410,10 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 | `arctan` | `\arctan` | `ln` | `\ln` |
 | `log` | `\log` | `exp` | `\exp` |
 | `det` | `\det` | `int` | `\int` |
+| `max` | `\max` | `min` | `\min` |
+| `sup` | `\sup` | `inf` | `\inf` |
+| `deg` | `\deg` | `argmax` | `\argmax` |
+| `argmin` | `\argmin` | | |
 
 > **Note:** `sinh`, `cosh`, and `tanh` are commented out in the source and do **not** expand.
 
@@ -398,11 +424,13 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 | `seq` | `\{a_n\}_{n=1}^{\infty} ·` (customisable) |
 | `sumn` | `sum_{n=1}^{\infty} ·` |
 | `sumk` | `sum_{k=1}^{n} ·` |
-| `limn` | `\lim_{n \to \infty} ·` |
-| `limsup` | `\limsup_{n \to \infty} ·` |
-| `liminf` | `\liminf_{n \to \infty} ·` |
+| `lim` | Unified limit — choice nodes select `\lim` / `\limsup` / `\liminf` and optional `_{n → ∞}` |
 | `geom` | `a \cdot r^{n-1} ·` (geometric term) |
 | `arith` | `a + (n - 1)d ·` (arithmetic term) |
+
+`lim` expands immediately (auto). Press `<Tab>` through two choice nodes:
+1. Choose operator: `\lim` (default) → `\limsup` → `\liminf`
+2. Choose limits: none (default) → `_{n \to \infty}` (with fill-in tab stops)
 
 **Misc subscript shorthands:**
 
@@ -414,9 +442,24 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 
 ### Matrix Editing (matrix env)
 
-| Trigger | Output |
-|---------|--------|
-| `,,` | ` & ` (column separator) |
+| Trigger | Output | Condition |
+|---------|--------|-----------|
+| `,,` | ` & ` | Any matrix/tabular env |
+| `&=` | `&= ·  \\` (choice: `&=` / `&\leq` / `&\geq`) | align/aligned/eqnarray only |
+
+**Dynamic matrix** (tab-triggered, regular snippet):
+
+Type `<type>mat<rows>x<cols>` to get a pre-filled matrix with a tab stop at every cell.
+
+| Example trigger | Result |
+|-----------------|--------|
+| `pmat3x3` | 3×3 `pmatrix` |
+| `bmat2x4` | 2×4 `bmatrix` |
+| `Vmat4x4` | 4×4 `Vmatrix` |
+
+Valid type letters: `b`, `B`, `p`, `v`, `V` (maps to `b/B/p/v/Vmatrix`).
+
+Tab visits every cell in row-major order. The last cell has no trailing `\\`.
 
 ## Customizing Triggers
 

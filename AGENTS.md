@@ -16,11 +16,12 @@ lua/latex-tools/
   context.lua         -- math zone / matrix env / code block detection (self-contained)
   math_parser.lua     -- tokenizer for smart-fraction / smart-postfix (verbatim copy, no deps)
   snippets.lua        -- ALL built-in snippets; register(config) called from setup()
+  auto_brackets.lua   -- enlarge_enclosing() callback: wraps enclosing ( or [ with \left/\right
   matrix.lua          -- handle_enter() for matrix row separator; consumed by autolist.lua
   visual_wrappers.lua -- <leader>nu/no/nc/nk/nb visual-mode wrappers
 plugin/latex-tools.lua  -- intentionally empty; setup() must be called explicitly
 tests/
-  minimal_init.lua    -- adds plugin to rtp, loads mini.nvim from dotfiles config
+  minimal_init.lua    -- adds plugin to rtp, loads mini.nvim from ~/.local/share/nvim/lazy/mini.nvim
   test_context.lua    -- math zone + matrix env + code block tests (MiniTest)
   test_math_parser.lua
 Makefile              -- `make test` runs all tests headlessly
@@ -44,7 +45,7 @@ make test                                    # all tests
 make test-file FILE=tests/test_context.lua   # single file
 ```
 
-Tests run headlessly via `nvim --headless --noplugin -u tests/minimal_init.lua`. `minimal_init.lua` pulls `mini.nvim` from `~/.config/nvim/pack/core/opt/mini.nvim` — if that path moves, tests break.
+Tests run headlessly via `nvim --headless --noplugin -u tests/minimal_init.lua`. `minimal_init.lua` pulls `mini.nvim` from `~/.local/share/nvim/lazy/mini.nvim` — if that path moves, tests break.
 
 ## Critical design points (do not regress these)
 
@@ -81,6 +82,30 @@ Overrides are keyed by the ORIGINAL trigger string — for regex snippets that's
 
 Registration loops over `{'markdown', 'tex'}`. Do not add a third call for the same snippets — earlier there was a bug where snippets registered 4× causing ordering issues. Commit `951b38b` fixed it.
 
+### 7. `auto_brackets.lua` — `enlarge_enclosing()` callback
+
+`auto_brackets.enlarge_enclosing` is a LuaSnip snippet callback attached via:
+
+```lua
+callbacks = { [-1] = { [events.enter] = auto_brackets.enlarge_enclosing } }
+```
+
+It fires when the snippet is first entered (just expanded, cursor at first insert node). It scans the current line for the innermost unmatched `(` or `[` to the left of the cursor, finds its matching close bracket, and replaces both with `\left(`/`\right)` (or `\left[`/`\right]`). The buffer edit is deferred via `vim.schedule` so LuaSnip can finish wiring extmarks first.
+
+Snippets that get `enlarge_cb`: `//` (plain frac), `/` (smart frac), `ddt`, `dint`, `oinf`, `infi`, `\sum`, `\prod`, `\int`, `par`.
+
+`auto_brackets` is intentionally NOT exported from `init.lua` — it is internal to `snippets.lua`. External callers should not depend on it.
+
+### 9. `context.is_in_align_env()` — subset of matrix envs
+
+`is_in_align_env()` is a thin wrapper over `_scan_matrix_env()` that only returns `true` for `align`, `align*`, `aligned`, `eqnarray`, `eqnarray*`. It exists solely for the `&=` autosnippet, which should NOT fire inside `pmatrix` etc.
+
+Do not merge this into `is_in_matrix_env()` — the distinction is load-bearing for `&=` not triggering in matrix environments.
+
+### 10. `config.snippets.categories` is currently unused
+
+The default config table includes a `categories` subtable (greek_letters, operators, symbols, …) but `snippets.register()` does not read it — all built-in snippets always register. This is dead config left as a placeholder for future per-category enable/disable. Do not add filtering logic without also wiring it into the pipeline and adding tests.
+
 ## Where to look for specific behaviors
 
 | Question | File |
@@ -89,7 +114,11 @@ Registration loops over `{'markdown', 'tex'}`. Do not add a third call for the s
 | "How does smart-fraction pick the numerator?" | `math_parser.lua` (tokenizer) + the `/` snippet in `snippets.lua` |
 | "Why is `Enter` inserting ` \\ `?" | `matrix.lua:handle_enter` called from `autolist.lua` |
 | "How does `,,` become ` & `?" | `snippets.lua` matrix column snippet (condition: `in_matrix_env`) |
+| "How does `&=` insert `&= \\`?" | `snippets.lua` align shorthand (condition: `in_align_env` from `context.lua`) |
 | "Where's the default keymap for `<leader>nu`?" | `visual_wrappers.lua:setup` |
+| "Why did `(` become `\left(`?" | `auto_brackets.lua:enlarge_enclosing` attached via `enlarge_cb` |
+| "How does `pmat3x3` generate a full matrix?" | `snippets.lua` dynamic matrix (`generate_matrix_body` + `d()`) in `regular_snippets` |
+| "Why does `lim` have choices for `limsup`?" | `snippets.lua` unified `lim` with `c()` choice nodes in sequences section |
 
 ## Debugging math zone false negatives
 
@@ -109,3 +138,5 @@ Conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`. Keep comm
 - Don't touch `col` arithmetic in `_check_mathzone_fallback` without re-running the closing-`$` regression test.
 - Don't collapse the markdown/tex branches in `_check_mathzone_treesitter` — they behave differently on purpose.
 - Don't auto-setup on plugin load. `setup()` is explicit so users control ordering relative to LuaSnip.
+- Don't implement `config.snippets.categories` filtering without also adding tests — it is currently intentionally dead config (see design point #10).
+- Don't export `auto_brackets` from `init.lua` — it is internal to `snippets.lua`.

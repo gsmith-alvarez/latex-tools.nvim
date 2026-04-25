@@ -68,6 +68,20 @@ function M.is_in_matrix_env()
   return M._scan_matrix_env()
 end
 
+--- Check if cursor is inside an align-like LaTeX environment.
+--- Used for the &= row-separator autosnippet.
+--- @return boolean
+function M.is_in_align_env()
+  if not M.is_in_mathzone() then return false end
+  local in_mat, env = M._scan_matrix_env()
+  if not in_mat or not env then return false end
+  local align_envs = {
+    align = true, ['align*'] = true, aligned = true,
+    eqnarray = true, ['eqnarray*'] = true,
+  }
+  return align_envs[env] == true
+end
+
 --- Check if cursor is in a fenced code block.
 --- Tries snippets.utils.in_code_block() via pcall first (dotfiles integration),
 --- then falls back to a simple line scanner.
