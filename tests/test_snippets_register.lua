@@ -113,5 +113,16 @@ T['snippets.register']['disable still removes a snippet even if category enabled
   MiniTest.expect.equality(triggers['@a'] == true, false)
 end
 
+T['snippets.register']['plain // fraction snippet is removed'] = function()
+  install_stubs()
+  local cfg = base_config()
+
+  require('latex-tools.snippets').register(cfg)
+
+  local ls = require('luasnip')
+  local triggers = flatten_triggers(ls._added.markdown)
+  MiniTest.expect.equality(triggers['//'] == true, false)
+end
+
 return T
 

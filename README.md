@@ -253,7 +253,6 @@ Full Greek names also auto-expand (word boundary required):
 | Trigger | Output | Notes |
 |---------|--------|-------|
 | `/` | `\frac{expr}{·}` | Smart: wraps preceding expr as numerator |
-| `//` | `\frac{·}{·}` | Plain fraction (fill both manually) |
 | `cfr` | `\cfrac{num}{den}` | Continued fraction |
 | `sr` | `^{2}` | Square |
 | `cb` | `^{3}` | Cube |
@@ -499,7 +498,6 @@ require('latex-tools').setup({
   snippets = {
     overrides = {
       ['@a'] = { trig = 'ga' },   -- remap alpha: type 'ga' instead of '@a'
-      ['//'] = { trig = 'ff' },   -- remap plain fraction (// → ff)
       ['/'] = { trig = 'sf' },    -- remap smart fraction (/ → sf)
     },
   },
@@ -555,10 +553,10 @@ When a snippet that produces `\frac`, `\int`, or `\sum` is triggered inside an e
 **Example:**
 
 ```
-(x + y//  →  \left(x + \frac{·}{·}\right)
+(x + y/  →  \left(x + \frac{x+y}{·}\right)
 ```
 
-The enlargement fires for: `//`, `/` (smart fraction), `ddt`, `dint`, `oinf`, `infi`, `\int`, `\sum`, `\prod`, `par`.
+The enlargement fires for: `/` (smart fraction), `ddt`, `dint`, `oinf`, `infi`, `\int`, `\sum`, `\prod`, `par`.
 
 **Conditions:**
 - Both the opening and matching closing bracket must already exist on the same line.

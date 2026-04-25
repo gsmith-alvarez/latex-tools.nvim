@@ -317,7 +317,6 @@ function M.register(config)
     sa({ trig = 'sts', wordTrig = false, condition = in_mathzone }, fmt([[_\text{{{}}}]], { i(1) })),
     sa({ trig = 'sq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt{{ {} }}{}]], { i(1), i(2) })),
     sa({ trig = 'nsq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt[{}]{{{}}}{}]], { i(1, 'n'), i(2), i(3) })),
-    sa({ trig = '//', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\frac{{{}}}{{{}}}{}]], { i(1), i(2), i(3) })),
     -- [060b] Smart Auto-capture Fraction (mA)
     -- Uses tokenizer to properly handle balanced parens, brackets, and LaTeX commands
     -- Examples: x/ → \frac{x}{}, (a+b)/ → \frac{a+b}{}, \alpha/ → \frac{\alpha}{}
@@ -1017,7 +1016,7 @@ function M.register(config)
 
     -- Everything else defaults to symbols/operators depending on what it is.
     local operators = {
-      ['/']=true,['//']=true,sr=true,cb=true,rd=true,us=true,sts=true,sq=true,nsq=true,ee=true,invs=true,conj=true,compl=true,trans=true,Re=true,Im=true,bf=true,rm=true,trace=true,
+      ['/']=true,sr=true,cb=true,rd=true,us=true,sts=true,sq=true,nsq=true,ee=true,invs=true,conj=true,compl=true,trans=true,Re=true,Im=true,bf=true,rm=true,trace=true,
       text=true,["'"]=true,
     }
     if operators[trig] or trig == 'cfr' then return 'operators' end
