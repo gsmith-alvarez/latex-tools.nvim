@@ -168,6 +168,8 @@ Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) 
 
 `·` in expansion output marks a cursor / tab-stop position.
 
+Many enclosing snippets (environments, fractions, `\mathbf`, smart postfix decorators, dynamic matrices, and similar) also include a **final** tab stop after the closing delimiter or outside the fence so you can jump past the construct.
+
 ### Visual selection defaults
 
 Some snippets will use the current visual selection as their default content (via `LS_SELECT_RAW`) when expanded from a visual-mode snippet workflow. This currently applies to:
@@ -180,25 +182,25 @@ Some snippets will use the current visual selection as their default content (vi
 
 | Trigger | Expands to | Notes |
 |---------|-----------|-------|
-| `mk` | `$·$` | Inline math |
-| `dm` | `$$\n·\n$$` | Display math |
+| `mk` | `$·$·` | Inline math |
+| `dm` | `$$\n·\n$$ ·` | Display math |
 
 ### Environments (math zone)
 
 | Trigger | Expands to |
 |---------|-----------|
-| `beg` | `\begin{·}\n\n\end{·}` |
-| `pmat` | `\begin{pmatrix}\n·\n\end{pmatrix}` |
-| `bmat` | `\begin{bmatrix}\n·\n\end{bmatrix}` |
-| `Bmat` | `\begin{Bmatrix}\n·\n\end{Bmatrix}` |
-| `vmat` | `\begin{vmatrix}\n·\n\end{vmatrix}` |
-| `Vmat` | `\begin{Vmatrix}\n·\n\end{Vmatrix}` |
-| `matrix` | `\begin{matrix}\n·\n\end{matrix}` |
-| `cases` | `\begin{cases}\n·\n\end{cases}` |
-| `align` | `\begin{align}\n·\n\end{align}` |
-| `array` | `\begin{array}\n·\n\end{array}` |
-| `box` | `\boxed{·}` |
-| `subst` | `\substack{·}` |
+| `beg` | `\begin{·}\n·\n\end{·}·` |
+| `pmat` | `\begin{pmatrix}\n·\n\end{pmatrix}·` |
+| `bmat` | `\begin{bmatrix}\n·\n\end{bmatrix}·` |
+| `Bmat` | `\begin{Bmatrix}\n·\n\end{Bmatrix}·` |
+| `vmat` | `\begin{vmatrix}\n·\n\end{vmatrix}·` |
+| `Vmat` | `\begin{Vmatrix}\n·\n\end{Vmatrix}·` |
+| `matrix` | `\begin{matrix}\n·\n\end{matrix}·` |
+| `cases` | `\begin{cases}\n·\n\end{cases}·` |
+| `align` | `\begin{align}\n·\n\end{align}·` |
+| `array` | `\begin{array}\n·\n\end{array}·` |
+| `box` | `\boxed{·}·` |
+| `subst` | `\substack{·}·` |
 | `text` | `\text{·}·` |
 | `'` | `\text{·}·` (shorthand for `text`) |
 
@@ -252,13 +254,13 @@ Full Greek names also auto-expand (word boundary required):
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `/` | `\frac{expr}{·}` | Smart: wraps preceding expr as numerator |
-| `cfr` | `\cfrac{num}{den}` | Continued fraction |
+| `/` | `\frac{expr}{·}·` | Smart: wraps preceding expr as numerator |
+| `cfr` | `\cfrac{·}{·} ·` | Continued fraction |
 | `sr` | `^{2}` | Square |
 | `cb` | `^{3}` | Cube |
 | `rd` | `^{·}` | General superscript |
 | `us` | `_{·}` | Subscript |
-| `sts` | `_\text{·}` | Text subscript |
+| `sts` | `_\text{·}·` | Text subscript |
 | `invs` | `^{-1}` | Inverse |
 | `conj` | `^{*}` | Conjugate |
 | `compl` | `^{c}` | Set complement |
@@ -266,7 +268,7 @@ Full Greek names also auto-expand (word boundary required):
 | `sq` | `\sqrt{· ·}` | Square root |
 | `nsq` | `\sqrt[·]{·}` | nth root |
 | `ee` | `e^{ · }` | Exponential |
-| `bf` | `\mathbf{·}` | Bold |
+| `bf` | `\mathbf{·}·` | Bold |
 | `rm` | `\mathrm{·}` | Roman |
 | `Re` | `\mathrm{Re}` | Real part |
 | `Im` | `\mathrm{Im}` | Imaginary part |
@@ -274,19 +276,19 @@ Full Greek names also auto-expand (word boundary required):
 
 ### Decorators / Postfix (math zone)
 
-These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`.
+These wrap the preceding token. Type `x` then the trigger: `xhat` → `\hat{x}`. The high-priority postfix variants include a trailing tab stop after the command.
 
 | Trigger | Output |
 |---------|--------|
-| `hat` | `\hat{...}` |
-| `bar` | `\bar{...}` |
-| `dot` | `\dot{...}` |
-| `ddot` | `\ddot{...}` |
-| `tilde` | `\tilde{...}` |
-| `und` | `\underline{...}` |
-| `vec` | `\vec{...}` |
-| `mfr` | `\mathfrak{...}` |
-| `deco` | choice menu: hat/bar/dot/ddot/tilde/vec/underline |
+| `hat` | `\hat{...}·` |
+| `bar` | `\bar{...}·` |
+| `dot` | `\dot{...}·` |
+| `ddot` | `\ddot{...}·` |
+| `tilde` | `\tilde{...}·` |
+| `und` | `\underline{...}·` |
+| `vec` | `\vec{...}·` |
+| `mfr` | `\mathfrak{...}·` |
+| `deco` | choice menu: hat/bar/dot/ddot/tilde/vec/underline (then a trailing tab past the brace) |
 
 ### Auto-subscript (math zone)
 
@@ -330,7 +332,7 @@ These are regex autosnippets — they fire automatically as you type.
 | `NN` | `\mathbb{N}` | `ZZ` | `\mathbb{Z}` |
 | `QQ` | `\mathbb{Q}` | `RR` | `\mathbb{R}` |
 | `CC` | `\mathbb{C}` | `PP` | `\mathbb{P}` |
-| `HH` | `\mathbb{H}` | `II` | `\mathbb{·}` |
+| `HH` | `\mathbb{H}` | `II` | `\mathbb{·}·` |
 | `LL` | `\mathcal{L}` | `eset` | `\emptyset` |
 | `and` | `\cap` | `orr` | `\cup` |
 | `cc` | `\subset` | `qq` | `\supset` |
@@ -364,7 +366,7 @@ These are regex autosnippets — they fire automatically as you type.
 | `lr\|` | `\left\| · \right\|` |
 | `lra` | `\left< · \right>` |
 | `binom` | `\binom{·}{·}` |
-| `brack` | choice menu: `()`, `[]`, `{}`, `<>`, `\|`, `\|\|` |
+| `brack` | choice menu: `()`, `[]`, `{}`, `<>`, `\|`, `\|\|` (then a trailing tab past the pair) |
 
 ### Arrows (math zone)
 
@@ -378,8 +380,8 @@ Extensible arrows:
 
 | Trigger | Output |
 |---------|--------|
-| `xra` | `\xrightarrow{top}` (choice: with optional `[bottom]`) |
-| `xla` | `\xleftarrow{top}` (choice: with optional `[bottom]`) |
+| `xra` | `\xrightarrow{·}{·} ·` (choice: optional `[bottom]`, then trailing tab) |
+| `xla` | `\xleftarrow{·}{·} ·` (choice: optional `[bottom]`, then trailing tab) |
 
 ### Integrals / Derivatives (math zone)
 
@@ -391,12 +393,12 @@ Extensible arrows:
 | `infi` | `\int_{-\infty}^{\infty} · \, d· ·` | Improper integral (auto) |
 | `iint` | `\iint` | Double integral (auto) |
 | `iiint` | `\iiint` | Triple integral (auto) |
-| `ddt` | `\frac{d}{dt} ` | Time derivative (auto) |
-| `par` | `\frac{ \partial · }{ \partial · } ·` | Partial derivative (tab) |
-| `pa`_xy_ | `\frac{ \partial x }{ \partial y }` | Regex: `pa([A-Za-z])([A-Za-z])` (tab) |
-| `\int` | `\int · \, d· ·` | Integral with measure (tab) |
-| `\sum` | `\sum_{·=·}^{·} ·` | Sum with limits (tab) |
-| `\prod` | `\prod_{·=·}^{·} ·` | Product with limits (tab) |
+| `ddt` | `\frac{d}{dt} ·` | Time derivative (auto) |
+| `par` | `\frac{ \partial · }{ \partial · } · ·` | Partial derivative (tab) |
+| `pa`_xy_ | `\frac{ \partial x }{ \partial y } ·` | Regex: `pa([A-Za-z])([A-Za-z])` (tab) |
+| `\int` | `\int · \, d· · ·` | Integral with measure (tab) |
+| `\sum` | `\sum_{·=·}^{·} · ·` | Sum with limits (tab) |
+| `\prod` | `\prod_{·=·}^{·} · ·` | Product with limits (tab) |
 
 ### Align helpers (align/aligned/eqnarray only)
 
@@ -413,17 +415,17 @@ Extensible arrows:
 |---------|--------|---------|--------|
 | `kbt` | `k_{B}T` | `msun` | `M_{\odot}` |
 | `bra` | `\bra{·} ·` | `ket` | `\ket{·} ·` |
-| `brk` | `\braket{ · \| · } ·` | `outer` | `\ket{·} \bra{·} ·` |
+| `brk` | `\braket{ · \| · } ·` | `outer` | `\ket{·} \bra{·} · ·` |
 
 ### Chemistry (math zone)
 
 | Trigger | Output | Notes |
 |---------|--------|-------|
-| `pu` | `\pu{ · }` | Physical units (`physics` package) |
-| `cee` | `\ce{ · }` | Chemical equation (`mhchem` package) |
+| `pu` | `\pu{ · }·` | Physical units (`physics` package) |
+| `cee` | `\ce{ · }·` | Chemical equation (`mhchem` package) |
 | `he4` | `{}^{4}_{2}He ` | Helium-4 isotope shorthand |
 | `he3` | `{}^{3}_{2}He ` | Helium-3 isotope shorthand |
-| `iso` | `{}^{·}_{·}· ` | Generic isotope template |
+| `iso` | `{}^{·}_{·}· ·` | Generic isotope template |
 
 ### Trig Functions (math zone)
 
@@ -460,6 +462,8 @@ These use regex patterns (`(.-)(sin)` etc.) so they expand when you type the bar
 1. Choose operator: `\lim` (default) → `\limsup` → `\liminf`
 2. Choose limits: none (default) → `_{n \to \infty}` (with fill-in tab stops)
 
+A final tab stop sits after the limit expression so you can jump past the whole `\lim` construct.
+
 **Misc subscript shorthands:**
 
 | Trigger | Output | Trigger | Output |
@@ -487,7 +491,7 @@ Type `<type>mat<rows>x<cols>` to get a pre-filled matrix with a tab stop at ever
 
 Valid type letters: `b`, `B`, `p`, `v`, `V` (maps to `b/B/p/v/Vmatrix`).
 
-Tab visits every cell in row-major order. The last cell has no trailing `\\`.
+Tab visits every cell in row-major order. The last cell has no trailing `\\`. One more tab after `\end{…matrix}` jumps past the environment.
 
 ## Customizing Triggers
 
