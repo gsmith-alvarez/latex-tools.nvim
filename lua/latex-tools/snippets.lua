@@ -607,12 +607,15 @@ function M.register(config)
         priority = 2000,
         dscr = [[NxM matrix: 3*3pmat, 2*4bmat, … (auto)]],
       },
-      {
-        f(function(_, snip) return '\\begin{' .. snip.captures[3] .. 'matrix}\n' end),
-        d(1, generate_matrix_body),
-        f(function(_, snip) return '\n\\end{' .. snip.captures[3] .. 'matrix}' end),
-        i(2),
-      }
+      fmt(
+        '\\begin{{{}matrix}}\n{}\n\\end{{{}matrix}}{}',
+        {
+          f(function(_, snip) return snip.captures[3] end),
+          d(1, generate_matrix_body),
+          f(function(_, snip) return snip.captures[3] end),
+          i(2),
+        }
+      )
     ),
 
     -- ── ENVIRONMENTS ( mA ) ──────────────────────────────────────────────────────
