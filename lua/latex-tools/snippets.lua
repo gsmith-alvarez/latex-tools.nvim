@@ -921,31 +921,42 @@ function M.register(config)
     sa({ trig = [[\sum]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\sum_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}{}]], { i(1), i(2, 'x'), i(3), i(4) })),
-    -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
-    sa(
-      { trig = '([bBpvV])mat(%d+)x(%d+)', regTrig = true, wordTrig = false, condition = in_mathzone },
-      {
-        f(function(_, snip) return '\\begin{' .. snip.captures[1] .. 'matrix}\n' end),
-        d(1, generate_matrix_body),
-        f(function(_, snip) return '\n\\end{' .. snip.captures[1] .. 'matrix}' end),
-        i(2),
-      }
-    ),
 
-    -- Partial derivatives
-    sa({ trig = 'par', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}{}]], { i(1, 'y'), i(2, 'x'), i(3), i(4) })),
+    -- Partial derivatives (listed before the dynamic-matrix regTrig so completion UIs tend to surface these first)
+    sa(
+      { trig = 'par', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb, dscr = [[\frac{\partial ·}{\partial ·} (tab)]] },
+      fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}{}]], { i(1, 'y'), i(2, 'x'), i(3), i(4) })
+    ),
     sa(
       {
         trig = 'pa([A-Za-z])([A-Za-z])',
         regTrig = true,
         wordTrig = false,
         condition = in_mathzone,
+        dscr = [[∂/∂ shorthand: paxy (tab) → \frac{\partial x}{\partial y}]],
       },
       {
         f(function(_, snip)
           return [[\frac{ \partial ]] .. snip.captures[1] .. [[ }{ \partial ]] .. snip.captures[2] .. ' } '
         end),
         i(1),
+      }
+    ),
+
+    -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
+    sa(
+      {
+        trig = '([bBpvV])mat(%d+)x(%d+)',
+        regTrig = true,
+        wordTrig = false,
+        condition = in_mathzone,
+        dscr = [[NxM matrix: pmat3x3, bmat2x4, … (tab)]],
+      },
+      {
+        f(function(_, snip) return '\\begin{' .. snip.captures[1] .. 'matrix}\n' end),
+        d(1, generate_matrix_body),
+        f(function(_, snip) return '\n\\end{' .. snip.captures[1] .. 'matrix}' end),
+        i(2),
       }
     ),
   }
