@@ -632,24 +632,15 @@ function M.register(config)
     sa({ trig = 'seq', wordTrig = false, condition = in_mathzone }, fmt([[\{{{}_{{{} = {}}}\}}^{{\infty}} {}]], { i(1, 'a_n'), i(2, 'n'), i(3, '1'), i(4) })),
     sa({ trig = 'sumn', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{\infty}} {}]], { i(1, 'n'), i(2, '1'), i(3) })),
     sa({ trig = 'sumk', wordTrig = false, condition = in_mathzone }, fmt([[sum_{{{} = {}}}^{{{}}} {}]], { i(1, 'k'), i(2, '1'), i(3, 'n'), i(4) })),
-    -- Choice branches must be `sn(nil, …)` with matching insert layout so
-    -- `luasnip.change_choice` does not hit nil marks (see LuaSnip choice_node docs).
-    -- Operator: full `\lim` / `\limsup` / `\liminf`. Limits: empty pair (skip) vs `_{·\to·}`.
+    -- Plain `\lim_{· \to ·}` + tail stops (no choice nodes; Tab through like `\int`).
     sa(
-      { trig = 'lim', wordTrig = false, condition = all(in_mathzone, no_backslash_immediately_before_match) },
       {
-        c(1, {
-          sn(nil, { t [[\lim]] }),
-          sn(nil, { t [[\limsup]] }),
-          sn(nil, { t [[\liminf]] }),
-        }, { restore_cursor = true }),
-        c(2, {
-          sn(nil, fmt([[{}{}]], { i(1, ''), i(2, '') })),
-          sn(nil, fmt([[_{{ {} \to {} }}]], { i(1, 'n'), i(2, [[\infty]]) })),
-        }, { restore_cursor = true }),
-        i(3),
-        i(4),
-      }
+        trig = 'lim',
+        wordTrig = false,
+        condition = all(in_mathzone, no_backslash_immediately_before_match),
+        callbacks = enlarge_cb,
+      },
+      fmt([[\lim_{{ {} \to {} }} {} {}]], { i(1, 'n'), i(2, [[\infty]]), i(3), i(4) })
     ),
     sa({ trig = 'geom', wordTrig = false, condition = in_mathzone }, fmt([[{} \cdot {}^{{{}-1}} {}]], { i(1, 'a'), i(2, 'r'), i(3, 'n'), i(4) })),
     sa({ trig = 'arith', wordTrig = false, condition = in_mathzone }, fmt([[{} + ({} - 1){} {}]], { i(1, 'a'), i(2, 'n'), i(3, 'd'), i(4) })),
