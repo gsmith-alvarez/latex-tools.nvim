@@ -56,6 +56,19 @@ function M.register(config)
   end
 
   local in_mathzone = context.is_in_mathzone
+
+  --- Reject `par` when it is the suffix of `\par` (e.g. typing `\partial`).
+  local function par_not_after_backslash(line_to_cursor, matched_trigger)
+    if not line_to_cursor or not matched_trigger then return true end
+    local len = #line_to_cursor
+    local tlen = #matched_trigger
+    local start = len - tlen + 1
+    if start >= 2 and line_to_cursor:sub(start - 1, start - 1) == '\\' then
+      return false
+    end
+    return true
+  end
+
   local function in_matrix_env()
     local ok, _ = context.is_in_matrix_env()
     return ok
@@ -377,7 +390,7 @@ function M.register(config)
     sa({ trig = 'del', wordTrig = false, condition = in_mathzone }, t [[\nabla]]),
     sa({ trig = 'xx', wordTrig = false, condition = in_mathzone }, t [[\times]]),
     sa({ trig = '**', wordTrig = false, condition = in_mathzone }, fmt([[\cdot {}]], { i(1) })),
-    sa({ trig = 'para', wordTrig = false, condition = in_mathzone }, t [[\parallel]]),
+    sa({ trig = 'pll', wordTrig = false, condition = in_mathzone }, t [[\parallel]]),
     sa({ trig = '===', wordTrig = false, condition = in_mathzone }, t [[\equiv]]),
     sa({ trig = '!=', wordTrig = false, condition = in_mathzone }, t [[\neq]]),
     sa({ trig = '>=', wordTrig = false, condition = in_mathzone }, t [[\geq]]),
@@ -531,6 +544,17 @@ function M.register(config)
     sa({ trig = 'oint',  wordTrig = false, condition = in_mathzone }, t [[\oint]]),
     sa({ trig = 'oinf',  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int_{{0}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
     sa({ trig = 'infi',  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int_{{-\infty}}^{{\infty}} {} \, d{} {}]], { i(1), i(2, 'x'), i(3) })),
+    sa(
+      {
+        trig = 'par',
+        wordTrig = true,
+        snippetType = 'autosnippet',
+        condition = all(in_mathzone, par_not_after_backslash),
+        callbacks = enlarge_cb,
+        dscr = [[\frac{\partial ·}{\partial ·} (auto)]],
+      },
+      fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}{}]], { i(1, 'y'), i(2, 'x'), i(3), i(4) })
+    ),
 
     -- ── QUANTUM MECHANICS / PHYSICS ( mA ) ───────────────────────────────────────
     sa({ trig = 'dag', wordTrig = false, condition = in_mathzone }, t [[^{\dagger}]]),
@@ -922,27 +946,6 @@ function M.register(config)
     sa({ trig = [[\prod]], wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\prod_{{{} = {}}}^{{{}}} {}{}]], { i(1, 'i'), i(2, '1'), i(3, 'N'), i(4), i(5) })),
     sa({ trig = [[\int]],  wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb }, fmt([[\int {} \, d{} {}{}]], { i(1), i(2, 'x'), i(3), i(4) })),
 
-    -- Partial derivatives (listed before the dynamic-matrix regTrig so completion UIs tend to surface these first)
-    sa(
-      { trig = 'par', wordTrig = false, condition = in_mathzone, callbacks = enlarge_cb, dscr = [[\frac{\partial ·}{\partial ·} (tab)]] },
-      fmt([[\frac{{ \partial {} }}{{ \partial {} }} {}{}]], { i(1, 'y'), i(2, 'x'), i(3), i(4) })
-    ),
-    sa(
-      {
-        trig = 'pa([A-Za-z])([A-Za-z])',
-        regTrig = true,
-        wordTrig = false,
-        condition = in_mathzone,
-        dscr = [[∂/∂ shorthand: paxy (tab) → \frac{\partial x}{\partial y}]],
-      },
-      {
-        f(function(_, snip)
-          return [[\frac{ \partial ]] .. snip.captures[1] .. [[ }{ \partial ]] .. snip.captures[2] .. ' } '
-        end),
-        i(1),
-      }
-    ),
-
     -- Dynamic matrix: [bBpvV]mat{rows}x{cols} e.g. pmat3x3 → 3×3 pmatrix with a tab stop at each cell
     sa(
       {
@@ -996,9 +999,6 @@ function M.register(config)
       },
       matrices = {
         ['([bBpvV])mat(%d+)x(%d+)'] = true,
-      },
-      integrals_derivatives = {
-        ['pa([A-Za-z])([A-Za-z])'] = true,
       },
       operators = {
         ['([A-Za-z])(%d)'] = true,       -- auto-subscript

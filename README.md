@@ -166,9 +166,9 @@ require('latex-tools').setup({
 
 Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only).
 
-`·` in expansion output marks a cursor / tab-stop position.
+`·` in expansion output marks one **LuaSnip insert / tab stop** in left-to-right order. When you see **`· ·` in a row** (two dots with only spaces or punctuation between them), that is **two different stops**, not one stop drawn twice: you tab through the first, then the second. For many big snippets the **last** stop is a deliberate “jump out” past the closing brace or past the main symbol so you can keep typing without the snippet feeling boxed in.
 
-Many enclosing snippets (environments, fractions, `\mathbf`, smart postfix decorators, dynamic matrices, and similar) also include a **final** tab stop after the closing delimiter or outside the fence so you can jump past the construct.
+Many enclosing snippets (environments, fractions, `\mathbf`, smart postfix decorators, dynamic matrices, and similar) also include that **final** jump-out stop after the closing delimiter or outside the fence.
 
 ### Visual selection defaults
 
@@ -308,7 +308,7 @@ These are regex autosnippets — they fire automatically as you type.
 | `+-` | `\pm` | `-+` | `\mp` |
 | `...` | `\dots` | `**` | `\cdot ` |
 | `nabl` | `\nabla` | `del` | `\nabla` |
-| `para` | `\parallel` | `===` | `\equiv` |
+| `pll` | `\parallel` | `===` | `\equiv` |
 | `!=` | `\neq` | `>=` | `\geq` |
 | `<=` | `\leq` | `>>` | `\gg` |
 | `<<` | `\ll` | `simm` | `\sim` |
@@ -394,11 +394,12 @@ Extensible arrows:
 | `iint` | `\iint` | Double integral (auto) |
 | `iiint` | `\iiint` | Triple integral (auto) |
 | `ddt` | `\frac{d}{dt} ·` | Time derivative (auto) |
-| `par` | `\frac{ \partial · }{ \partial · } · ·` | Partial derivative (tab) |
-| `pa`_xy_ | `\frac{ \partial x }{ \partial y } ·` | Regex: `pa([A-Za-z])([A-Za-z])` (tab) |
+| `par` | `\frac{ \partial · }{ \partial · } · ·` | Partial derivative (**auto** in math; `wordTrig` + skips `\par…` for `\partial`) |
 | `\int` | `\int · \, d· · ·` | Integral with measure (tab) |
 | `\sum` | `\sum_{·=·}^{·} · ·` | Sum with limits (tab) |
 | `\prod` | `\prod_{·=·}^{·} · ·` | Product with limits (tab) |
+
+`par` expands as soon as you finish the three letters. That means identifiers that **start** with `par` (e.g. `parent`, `parity`) will expand after `par` unless you split typing (e.g. insert a space and delete it). The old `\parallel` trigger `para` was renamed to **`pll`** so it does not collide with `par`.
 
 ### Align helpers (align/aligned/eqnarray only)
 
@@ -508,7 +509,7 @@ require('latex-tools').setup({
 })
 ```
 
-Only `trig`, `wordTrig`, and `regTrig` can be changed. Snippet body and nodes are fixed.
+Only `trig`, `wordTrig`, and `regTrig` can be changed. Snippet body and nodes are fixed. The `\parallel` trigger is **`pll`** so it does not collide with autosnippet **`par`** (partial derivative).
 
 ### Disable a built-in snippet
 
@@ -525,7 +526,7 @@ require('latex-tools').setup({
 Snippets that use `regTrig = true` are keyed by their raw Lua pattern string. Check the snippet source to find the exact pattern. Examples:
 
 - Auto-subscript: `'([A-Za-z])(%d)'`
-- Partial derivative: `'pa([A-Za-z])([A-Za-z])'`
+- Dynamic matrix: `'([bBpvV])mat(%d+)x(%d+)'`
 
 ```lua
 overrides = {
