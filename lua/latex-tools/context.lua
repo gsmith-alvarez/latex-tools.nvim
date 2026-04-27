@@ -4,6 +4,25 @@
 local M = {}
 
 -- =============================================================================
+-- CACHE
+-- =============================================================================
+
+-- Per-call memoization keyed by "bufnr:changedtick:row:col[:<ns>]".
+-- Invalidated automatically: any edit increments changedtick; any cursor move
+-- changes row/col. Both produce a different key, forcing a fresh scan.
+-- In normal editing this table holds at most 2 live entries at a time.
+local _cache = {}
+
+local function cache_key(bufnr, tick, row, col, ns)
+  return bufnr .. ':' .. tick .. ':' .. row .. ':' .. col .. ':' .. ns
+end
+
+--- Wipe the memoization cache. Exposed for tests and external tooling.
+function M.clear_cache()
+  _cache = {}
+end
+
+-- =============================================================================
 -- CONSTANTS
 -- =============================================================================
 
@@ -52,13 +71,20 @@ local MATRIX_ENVS = M.DEFAULT_MATRIX_ENVS
 --- For tex/latex: always returns true (entire file is considered math-capable).
 --- Known limitation: \text{...} escapes inside .tex files are not detected;
 ---   snippets may fire inside \text{} in .tex files.
---- For markdown*: uses Treesitter + fallback line scanner.
+--- For markdown*: uses Treesitter + fallback line scanner (result memoized per tick).
 ---@return boolean
 function M.is_in_mathzone()
   local ft = vim.bo.filetype
   if ft == 'tex' or ft == 'latex' then return true end
   if ft == 'markdown' or ft:match('^markdown') then
-    return M._check_mathzone_markdown()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local tick   = vim.api.nvim_buf_get_changedtick(bufnr)
+    local pos    = vim.api.nvim_win_get_cursor(0)
+    local key    = cache_key(bufnr, tick, pos[1], pos[2], 'mz')
+    if _cache[key] ~= nil then return _cache[key] end
+    local result = M._check_mathzone_markdown()
+    _cache[key]  = result
+    return result
   end
   return false
 end
@@ -68,15 +94,24 @@ end
 ---@return string|nil env_name  Name of innermost matrix env, or nil
 function M.is_in_matrix_env()
   if not M.is_in_mathzone() then return false, nil end
-  return M._scan_matrix_env()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local tick   = vim.api.nvim_buf_get_changedtick(bufnr)
+  local pos    = vim.api.nvim_win_get_cursor(0)
+  local key    = cache_key(bufnr, tick, pos[1], pos[2], 'mx')
+  if _cache[key] ~= nil then
+    local v = _cache[key]
+    return v[1], v[2]
+  end
+  local in_mat, env = M._scan_matrix_env()
+  _cache[key] = { in_mat, env }
+  return in_mat, env
 end
 
 --- Check if cursor is inside an align-like LaTeX environment.
 --- Used for the &= row-separator autosnippet.
 ---@return boolean
 function M.is_in_align_env()
-  if not M.is_in_mathzone() then return false end
-  local in_mat, env = M._scan_matrix_env()
+  local in_mat, env = M.is_in_matrix_env()
   if not in_mat or not env then return false end
   local align_envs = {
     align = true, ['align*'] = true, aligned = true,
