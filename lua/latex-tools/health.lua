@@ -4,8 +4,8 @@ local M = {}
 
 local MIN_Nvim_MINOR = 10
 
---- @return boolean ok
---- @return string|nil message
+---@return boolean ok
+---@return string|nil message
 local function nvim_version_ok()
   local v = vim.version()
   if not v or type(v.major) ~= 'number' then
@@ -21,7 +21,7 @@ local function nvim_version_ok()
 end
 
 --- Read LuaSnip merged config if available.
---- @return boolean|nil enable_autosnippets nil if unknown
+---@return boolean|nil enable_autosnippets nil if unknown
 local function luasnip_autosnippets_enabled()
   local ok, session = pcall(require, 'luasnip.session')
   if not ok or type(session) ~= 'table' or type(session.config) ~= 'table' then

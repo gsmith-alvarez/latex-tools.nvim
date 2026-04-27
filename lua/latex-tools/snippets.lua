@@ -7,7 +7,7 @@
 local M = {}
 
 --- Register all LaTeX math snippets with LuaSnip
---- @param config table Plugin configuration
+---@param config table Plugin configuration
 function M.register(config)
   local ls = require 'luasnip'
   local s = ls.snippet

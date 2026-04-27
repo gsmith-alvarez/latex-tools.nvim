@@ -1,4 +1,4 @@
--- [[ MATRIX: lua/latex-tools/matrix.lua ]]
+-- lua/latex-tools/matrix.lua
 -- =============================================================================
 -- Purpose: Smart Enter behavior inside LaTeX matrix-like environments.
 -- Domain:  Editing / Snippets / Scientific Notetaking
@@ -22,8 +22,8 @@ local context = require 'latex-tools.context'
 --- Handle Enter key in matrix environments.
 --- Returns (true, ' \\ ') if in matrix, (false, nil) otherwise.
 --- Called by autolist.lua's CR handler.
---- @return boolean handled
---- @return string|nil keys
+---@return boolean handled
+---@return string|nil keys
 function M.handle_enter()
   local in_matrix, _ = context.is_in_matrix_env()
   if in_matrix then
@@ -33,7 +33,7 @@ function M.handle_enter()
 end
 
 --- Setup matrix module (config stored for future use).
---- @param config table Plugin configuration
+---@param config table Plugin configuration
 function M.setup(config)
   M.config = config
 end
