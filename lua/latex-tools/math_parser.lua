@@ -1,4 +1,4 @@
--- [[ LATEX TOKENIZER: lua/snippets/math_parser.lua ]]
+-- lua/latex-tools/math_parser.lua
 -- =============================================================================
 -- Purpose: LaTeX tokenizer and expression grouper for smart snippet expansion.
 -- Domain:  Editing / Snippets

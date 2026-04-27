@@ -30,7 +30,9 @@ local LATEX_TEXT_CMDS = {
 }
 
 --- Matrix/tabular-style environment names.
-local MATRIX_ENVS = {
+--- Exported as M.DEFAULT_MATRIX_ENVS so init.lua can reference this as the
+--- single source of truth for the default config value.
+M.DEFAULT_MATRIX_ENVS = {
   'matrix',    'pmatrix',   'bmatrix',   'Bmatrix',
   'vmatrix',   'Vmatrix',   'smallmatrix',
   'array',
@@ -40,6 +42,7 @@ local MATRIX_ENVS = {
   'eqnarray',  'eqnarray*',
   'multline',  'multline*',
 }
+local MATRIX_ENVS = M.DEFAULT_MATRIX_ENVS
 
 -- =============================================================================
 -- PUBLIC API
@@ -50,7 +53,7 @@ local MATRIX_ENVS = {
 --- Known limitation: \text{...} escapes inside .tex files are not detected;
 ---   snippets may fire inside \text{} in .tex files.
 --- For markdown*: uses Treesitter + fallback line scanner.
---- @return boolean
+---@return boolean
 function M.is_in_mathzone()
   local ft = vim.bo.filetype
   if ft == 'tex' or ft == 'latex' then return true end
@@ -61,8 +64,8 @@ function M.is_in_mathzone()
 end
 
 --- Check if cursor is inside a matrix-like LaTeX environment.
---- @return boolean in_matrix
---- @return string|nil env_name  Name of innermost matrix env, or nil
+---@return boolean in_matrix
+---@return string|nil env_name  Name of innermost matrix env, or nil
 function M.is_in_matrix_env()
   if not M.is_in_mathzone() then return false, nil end
   return M._scan_matrix_env()
@@ -70,7 +73,7 @@ end
 
 --- Check if cursor is inside an align-like LaTeX environment.
 --- Used for the &= row-separator autosnippet.
---- @return boolean
+---@return boolean
 function M.is_in_align_env()
   if not M.is_in_mathzone() then return false end
   local in_mat, env = M._scan_matrix_env()
@@ -85,7 +88,7 @@ end
 --- Check if cursor is in a fenced code block.
 --- Tries snippets.utils.in_code_block() via pcall first (dotfiles integration),
 --- then falls back to a simple line scanner.
---- @return boolean
+---@return boolean
 function M.is_in_code_block()
   -- Try dotfiles integration first; only trust an affirmative (true) result.
   -- A false from the dotfiles may mean Treesitter wasn't available, so we
@@ -112,13 +115,15 @@ function M.is_in_code_block()
 end
 
 --- Check if cursor is in plain text (not in a math zone, not in a code block).
---- @return boolean
+---@return boolean
 function M.is_plain_text()
   return not M.is_in_mathzone() and not M.is_in_code_block()
 end
 
 -- =============================================================================
 -- INTERNAL: TREESITTER PATH
+-- Functions prefixed with _ are internal helpers kept on M so tests can call
+-- them directly. Do not call them from outside this module.
 -- =============================================================================
 
 --- Walk TS nodes from cursor upward looking for a math zone.
@@ -126,7 +131,7 @@ end
 ---   true  — cursor is in a math node (and not escaped by \text{})
 ---   false — cursor is explicitly in text mode (\text{} or text_mode node)
 ---   nil   — treesitter unavailable or no conclusive node found (try fallback)
---- @return boolean|nil
+---@return boolean|nil
 function M._check_mathzone_treesitter()
   local ok_ts, ts = pcall(require, 'vim.treesitter')
   if not ok_ts then return nil end
@@ -179,7 +184,7 @@ end
 ---   - `...` inline code spans (masked so $ inside doesn't count)
 ---   - inline_math resets at each line boundary (markdown $ doesn't span lines)
 ---   - $$ display math DOES span lines
---- @return boolean
+---@return boolean
 function M._check_mathzone_fallback()
   local bufnr = vim.api.nvim_get_current_buf()
   local pos = vim.api.nvim_win_get_cursor(0)
@@ -240,7 +245,7 @@ end
 --- For nil (inconclusive) OR false (heuristic match like \text{} which can
 --- fire on unrelated node text in injected LaTeX), we always defer to the
 --- fallback line scanner, which is authoritative for markdown math zones.
---- @return boolean
+---@return boolean
 function M._check_mathzone_markdown()
   local ts_result = M._check_mathzone_treesitter()
   if ts_result == true then return true end
@@ -255,8 +260,8 @@ end
 --- Scan buffer from start to cursor for open \begin{env} with no matching \end{env}.
 --- Known limitation: mismatched \end{env} (wrong env name) is silently discarded,
 ---   not unwound. May produce wrong results on partially-formed LaTeX.
---- @return boolean in_matrix
---- @return string|nil env_name
+---@return boolean in_matrix
+---@return string|nil env_name
 function M._scan_matrix_env()
   local bufnr = vim.api.nvim_get_current_buf()
   local pos = vim.api.nvim_win_get_cursor(0)

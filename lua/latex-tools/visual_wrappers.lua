@@ -1,4 +1,4 @@
--- [[ VISUAL WRAPPERS: lua/latex-tools/visual_wrappers.lua ]]
+-- lua/latex-tools/visual_wrappers.lua
 -- =============================================================================
 -- Purpose: Visual-mode LaTeX annotation wrappers for math zones.
 -- Domain:  Scientific Notetaking / LaTeX Editing

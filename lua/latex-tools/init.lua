@@ -2,6 +2,7 @@
 -- Main entry point for latex-tools.nvim
 -- Call require('latex-tools').setup() to activate the plugin.
 local M = {}
+local context = require 'latex-tools.context'
 
 -- Avoid duplicate ls.add_snippets when setup() is called more than once.
 -- idle -> scheduled (defer path) -> done; immediate goes idle -> done in one step.
@@ -64,14 +65,7 @@ local defaults = {
   matrix = {
     enabled = true,
     enter_inserts_row_sep = true,
-    envs = {
-      'matrix', 'pmatrix', 'bmatrix', 'Bmatrix',
-      'vmatrix', 'Vmatrix', 'smallmatrix',
-      'array', 'align', 'align*', 'aligned',
-      'cases', 'split', 'gather', 'gather*',
-      'gathered', 'eqnarray', 'eqnarray*',
-      'multline', 'multline*',
-    },
+    envs = context.DEFAULT_MATRIX_ENVS,
   },
   context = {
     use_treesitter = true,
@@ -150,7 +144,7 @@ end
 
 -- Export submodules for external integration
 -- e.g. autolist.lua can call require('latex-tools').matrix.handle_enter()
-M.context     = require 'latex-tools.context'
+M.context     = context
 M.math_parser = require 'latex-tools.math_parser'
 M.matrix      = require 'latex-tools.matrix'
 
