@@ -10,16 +10,31 @@ local M = {}
 -- Per-call memoization keyed by "bufnr:changedtick:row:col[:<ns>]".
 -- Invalidated automatically: any edit increments changedtick; any cursor move
 -- changes row/col. Both produce a different key, forcing a fresh scan.
--- In normal editing this table holds at most 2 live entries at a time.
-local _cache = {}
+-- In normal editing this table holds at most 2 live entries at a time, but
+-- keys are never individually evicted, so _cache_size guards against unbounded
+-- growth: once the table hits _CACHE_MAX entries it is wiped in full. Since all
+-- results are cheap to recompute a full flush is safe.
+local _CACHE_MAX  = 32
+local _cache      = {}
+local _cache_size = 0
 
 local function cache_key(bufnr, tick, row, col, ns)
   return bufnr .. ':' .. tick .. ':' .. row .. ':' .. col .. ':' .. ns
 end
 
+local function cache_insert(key, value)
+  if _cache_size >= _CACHE_MAX then
+    _cache      = {}
+    _cache_size = 0
+  end
+  _cache[key]  = value
+  _cache_size  = _cache_size + 1
+end
+
 --- Wipe the memoization cache. Exposed for tests and external tooling.
 function M.clear_cache()
-  _cache = {}
+  _cache      = {}
+  _cache_size = 0
 end
 
 -- =============================================================================
@@ -83,7 +98,7 @@ function M.is_in_mathzone()
     local key    = cache_key(bufnr, tick, pos[1], pos[2], 'mz')
     if _cache[key] ~= nil then return _cache[key] end
     local result = M._check_mathzone_markdown()
-    _cache[key]  = result
+    cache_insert(key, result)
     return result
   end
   return false
@@ -103,7 +118,7 @@ function M.is_in_matrix_env()
     return v[1], v[2]
   end
   local in_mat, env = M._scan_matrix_env()
-  _cache[key] = { in_mat, env }
+  cache_insert(key, { in_mat, env })
   return in_mat, env
 end
 
