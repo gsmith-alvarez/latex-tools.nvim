@@ -127,6 +127,30 @@ local function read_single_char_token(str, start)
   }, start + 1
 end
 
+--- Read a contiguous alphanumeric run (e.g. `hello`, `x1`)
+---@param str string
+---@param start number 1-indexed
+---@return MathToken token
+---@return number next_index
+local function read_alnum_token(str, start)
+  local len = #str
+  local current = start + 1
+
+  while current <= len do
+    local c = str:sub(current, current)
+    if not (is_alpha(c) or c:match '%d') then
+      break
+    end
+    current = current + 1
+  end
+
+  return {
+    start = start,
+    finish = current - 1,
+    text = str:sub(start, current - 1),
+  }, current
+end
+
 --- Read the next token from `str` starting at position `start`
 ---@param str string
 ---@param start number 1-indexed
@@ -139,6 +163,8 @@ local function read_next_token(str, start)
     return read_comment_token(str, start)
   elseif char == '\\' then
     return read_escape_token(str, start)
+  elseif is_alpha(char) or char:match '%d' then
+    return read_alnum_token(str, start)
   else
     return read_single_char_token(str, start)
   end
@@ -354,6 +380,73 @@ function M.get_previous_expression(str)
   local char_end = tokens[end_idx].finish
 
   return expr_text, char_start, char_end
+end
+
+--- Numerator text for the smart `/` → `\frac` autosnippet: the contiguous
+--- non-whitespace run immediately before the trigger. When that run starts at
+--- column 1, a leading `$` or `$$` (markdown math delimiters) is not captured.
+---@param str string text before the `/` trigger
+---@return string expression
+---@return number char_start 1-indexed start in `str`
+---@return number char_end 1-indexed end in `str`
+function M.get_fraction_numerator(str)
+  if str == '' then
+    return '', 0, 0
+  end
+
+  local expr = str:match('(%S+)$')
+  if not expr or expr == '' then
+    return '', 0, 0
+  end
+
+  local char_start = #str - #expr + 1
+  if char_start == 1 then
+    if expr:sub(1, 2) == '$$' then
+      expr = expr:sub(3)
+      char_start = char_start + 2
+    elseif expr:sub(1, 1) == '$' then
+      expr = expr:sub(2)
+      char_start = char_start + 1
+    end
+  end
+
+  if expr == '' then
+    return '', 0, 0
+  end
+
+  return expr, char_start, #str
+end
+
+--- Text before an autosnippet trigger for smart capture.
+--- LuaSnip's `line_to_cursor` is the line up to the cursor and often does not
+--- include the trigger character yet; only strip it when it is actually present.
+---@param line_to_cursor string
+---@param matched_trigger string
+---@return string
+function M.line_before_trigger(line_to_cursor, matched_trigger)
+  if matched_trigger ~= '' and line_to_cursor:sub(-#matched_trigger) == matched_trigger then
+    return line_to_cursor:sub(1, #line_to_cursor - #matched_trigger)
+  end
+  return line_to_cursor
+end
+
+--- 0-indexed `clear_region` for replacing `expr` plus an optional trailing trigger.
+--- Mirrors LuaSnip's postfix helper: cursor-relative, not `char_start` from the parser.
+---@param pos number[] 0-indexed { row, col }
+---@param expr string captured expression text
+---@param matched_trigger string
+---@param line_to_cursor string
+---@return table clear_region
+function M.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor)
+  local trigger_at_end = matched_trigger ~= ''
+    and line_to_cursor:sub(-#matched_trigger) == matched_trigger
+  local trigger_len = trigger_at_end and #matched_trigger or 0
+  local clear_from_col = math.max(0, pos[2] - #expr - trigger_len)
+
+  return {
+    from = { pos[1], clear_from_col },
+    to = { pos[1], pos[2] },
+  }
 end
 
 --- Get the previous expression, consuming multiple brace groups after a command

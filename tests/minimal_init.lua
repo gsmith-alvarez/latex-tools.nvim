@@ -1,39 +1,35 @@
--- tests/minimal_init.lua
--- Bootstrap: create an isolated runtimepath, load MiniTest.
-local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':h:h')
-
--- Avoid pulling in user config/after/ftplugin from default runtimepath.
--- Keep only Vim runtime + this plugin + test deps.
-local vimruntime = os.getenv('VIMRUNTIME')
-vim.opt.rtp = {}
-if vimruntime and vimruntime ~= '' then
-  vim.opt.rtp:append(vimruntime)
+-- Headless test bootstrap: repo minimal_init + MiniTest.
+local src = debug.getinfo(1, 'S').source
+if src:sub(1, 1) == '@' then
+  src = src:sub(2)
 end
-vim.opt.rtp:append(plugin_root)
+local root = vim.fn.fnamemodify(src, ':p:h:h')
 
--- Disable runtime ftplugins/indent (can trigger Treesitter parser startup).
+local minimal, err = loadfile(root .. '/minimal_init.lua')
+if not minimal then
+  error(('tests/minimal_init: cannot load %s/minimal_init.lua: %s'):format(root, err or 'unknown'))
+end
+minimal()
+
 vim.cmd('filetype plugin indent off')
 
--- Load MiniTest. Prefer user's local install, but fall back to vendored copy
--- so tests can run in clean environments.
--- Avoid shada/swap writes outside workspace (sandbox-friendly)
-vim.opt.shadafile = 'NONE'
-vim.opt.swapfile = false
 vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.undofile = false
 vim.opt.updatecount = 0
 
-local mini_path = vim.fn.expand('~/.local/share/nvim/lazy/mini.nvim')
-if vim.uv.fs_stat(mini_path) then
-  vim.opt.rtp:prepend(mini_path)
-else
-  vim.opt.rtp:prepend(plugin_root .. '/tests/vendor/mini.nvim')
+local pack, pack_err = loadfile(root .. '/pack_deps.lua')
+if not pack then
+  error(('tests/minimal_init: cannot load pack_deps.lua: %s'):format(pack_err or 'unknown'))
+end
+pack = pack()
+
+if not pack.prepend_opt('mini.nvim') then
+  vim.opt.rtp:prepend(root .. '/tests/vendor/mini.nvim')
 end
 
-local MiniTest = require('mini.test')
-MiniTest.setup({
+require('mini.test').setup({
   execute = {
-    reporter = MiniTest.gen_reporter.stdout({ group_depth = 1 }),
+    reporter = require('mini.test').gen_reporter.stdout({ group_depth = 1 }),
   },
 })

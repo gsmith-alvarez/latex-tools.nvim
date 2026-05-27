@@ -22,7 +22,10 @@ lua/latex-tools/
   health.lua          -- :checkhealth latex-tools (Neovim, LuaSnip, TS parsers, setup state)
 plugin/latex-tools.lua  -- intentionally empty; setup() must be called explicitly
 tests/
-  minimal_init.lua         -- adds plugin to rtp, loads mini.nvim from ~/.local/share/nvim/lazy/mini.nvim
+  minimal_init.lua         -- rtp only; use with `nvim --clean -u minimal_init.lua` then `:source dev.vim`
+  dev.vim / dev.lua        -- manual dev: setup() + LuaSnip from pack/core/opt (see pack_deps.lua)
+  pack_deps.lua            -- resolve ~/.local/share/nvim/site/pack/core/opt/<name>
+  tests/minimal_init.lua   -- headless tests: loads root minimal_init + MiniTest
   test_context.lua         -- math zone + matrix env + code block tests (MiniTest)
   test_math_parser.lua
   test_snippets_register.lua -- stub LuaSnip; filetypes, categories, disable pipeline
@@ -48,7 +51,7 @@ make test                                    # all tests
 make test-file FILE=tests/test_context.lua   # single file
 ```
 
-Tests run headlessly via `nvim --headless --noplugin -u tests/minimal_init.lua`. `minimal_init.lua` pulls `mini.nvim` from `~/.local/share/nvim/lazy/mini.nvim` — if that path moves, tests break.
+Tests run headlessly via `nvim --headless --noplugin -u tests/minimal_init.lua` (which loads root `minimal_init.lua` then MiniTest). Mini.nvim: `pack/core/opt/mini.nvim` or `tests/vendor/mini.nvim`.
 
 ## Critical design points (do not regress these)
 
@@ -116,7 +119,7 @@ Do not merge this into `is_in_matrix_env()` — the distinction is load-bearing 
 | Question | File |
 |---|---|
 | "Why doesn't my snippet fire in `$...$`?" | `context.lua:_check_mathzone_fallback` + `_check_mathzone_markdown` |
-| "How does smart-fraction pick the numerator?" | `math_parser.lua` (tokenizer) + the `/` snippet in `snippets.lua` |
+| "How does smart-fraction pick the numerator?" | `math_parser.lua:get_fraction_numerator` (trailing `%S+`, strip leading `$`/`$$` at col 1) + `/` in `snippets.lua` |
 | "Why is `Enter` inserting ` \\ `?" | `matrix.lua:handle_enter` called from `autolist.lua` |
 | "How does `,,` become ` & `?" | `snippets.lua` matrix column snippet (condition: `in_matrix_env`) |
 | "How does `&=` insert `&= \\`?" | `snippets.lua` align shorthand (condition: `in_align_env` from `context.lua`) |
@@ -141,7 +144,7 @@ Conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`. Keep comm
 ## Things NOT to do
 
 - Don't add dotfiles dependencies (`snippets.utils`, `snippets.math_parser`, etc.) except the defensive pcall in `is_in_code_block`.
-- Don't replace MiniTest with another framework — `minimal_init.lua` is pinned to it.
+- Don't replace MiniTest with another framework — `tests/minimal_init.lua` is pinned to it.
 - Don't touch `col` arithmetic in `_check_mathzone_fallback` without re-running the closing-`$` regression test.
 - Don't collapse the markdown/tex branches in `_check_mathzone_treesitter` — they behave differently on purpose.
 - Don't auto-setup on plugin load. `setup()` is explicit so users control ordering relative to LuaSnip.

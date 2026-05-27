@@ -123,31 +123,24 @@ function M.register(config)
   end
 
   --- Create a resolveExpandParams function for smart fraction
-  --- Uses tokenizer to find the expression before '/' and sets clear_region
+  --- Captures contiguous non-whitespace before '/' (see get_fraction_numerator)
   ---@return function resolveExpandParams callback
   local function make_smart_fraction_resolve()
     return function(_snippet, line_to_cursor, matched_trigger, _captures)
-      -- Get text before the '/' trigger
-      local text_before = line_to_cursor:sub(1, #line_to_cursor - #matched_trigger)
+      local text_before = math_parser.line_before_trigger(line_to_cursor, matched_trigger)
       if text_before == '' then
         return nil -- No expression to capture, don't expand
       end
 
-      local expr, char_start, _char_end = math_parser.get_previous_expression(text_before)
+      local expr, char_start, _char_end = math_parser.get_fraction_numerator(text_before)
       if expr == '' or char_start == 0 then
         return nil -- No valid expression found
       end
 
       local pos = get_cursor_0ind()
-      -- char_start is 1-indexed position in text_before
-      -- We need to clear from that position to cursor
-      local clear_start_col = char_start - 1 -- Convert to 0-indexed
 
       return {
-        clear_region = {
-          from = { pos[1], clear_start_col },
-          to = pos,
-        },
+        clear_region = math_parser.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor),
         env_override = {
           SMART_FRAC_NUMERATOR = expr,
         },
@@ -161,7 +154,7 @@ function M.register(config)
   ---@return function resolveExpandParams callback
   local function make_smart_postfix_resolve(_decorator_trigger)
     return function(_snippet, line_to_cursor, matched_trigger, _captures)
-      local text_before = line_to_cursor:sub(1, #line_to_cursor - #matched_trigger)
+      local text_before = math_parser.line_before_trigger(line_to_cursor, matched_trigger)
       if text_before == '' then
         return nil
       end
@@ -172,13 +165,9 @@ function M.register(config)
       end
 
       local pos = get_cursor_0ind()
-      local clear_start_col = char_start - 1
 
       return {
-        clear_region = {
-          from = { pos[1], clear_start_col },
-          to = pos,
-        },
+        clear_region = math_parser.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor),
         env_override = {
           POSTFIX_MATCH = expr,
         },

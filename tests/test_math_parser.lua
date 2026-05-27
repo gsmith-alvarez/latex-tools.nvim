@@ -23,6 +23,44 @@ T['math_parser']['get_previous_expression extracts simple variable'] = function(
   MiniTest.expect.equality(e, 1)
 end
 
+T['math_parser']['tokenize groups contiguous alnum as one token'] = function()
+  local mp = require 'latex-tools.math_parser'
+  local tokens = mp.tokenize('hello')
+  MiniTest.expect.equality(#tokens, 1)
+  MiniTest.expect.equality(tokens[1].text, 'hello')
+end
+
+T['math_parser']['get_fraction_numerator captures decimals and words'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('17.3')
+  MiniTest.expect.equality(expr, '17.3')
+  MiniTest.expect.equality(s, 1)
+  MiniTest.expect.equality(e, 4)
+
+  expr, s, e = mp.get_fraction_numerator('prefix 17.3')
+  MiniTest.expect.equality(expr, '17.3')
+  MiniTest.expect.equality(s, 8)
+  MiniTest.expect.equality(e, 11)
+
+  expr, s, e = mp.get_fraction_numerator('Mu_Z')
+  MiniTest.expect.equality(expr, 'Mu_Z')
+end
+
+T['math_parser']['get_fraction_numerator strips leading math delimiters at line start'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('$17.3')
+  MiniTest.expect.equality(expr, '17.3')
+  MiniTest.expect.equality(s, 2)
+  MiniTest.expect.equality(e, 5)
+
+  expr, s, e = mp.get_fraction_numerator('$$x')
+  MiniTest.expect.equality(expr, 'x')
+  MiniTest.expect.equality(s, 3)
+  MiniTest.expect.equality(e, 3)
+end
+
 T['math_parser']['get_previous_expression extracts contiguous word'] = function()
   local mp = require 'latex-tools.math_parser'
 
@@ -30,6 +68,28 @@ T['math_parser']['get_previous_expression extracts contiguous word'] = function(
   MiniTest.expect.equality(expr, 'velocity')
   MiniTest.expect.equality(s, 1)
   MiniTest.expect.equality(e, 8)
+end
+
+T['math_parser']['line_before_trigger strips trigger only when present'] = function()
+  local mp = require 'latex-tools.math_parser'
+  MiniTest.expect.equality(mp.line_before_trigger('hello/', '/'), 'hello')
+  MiniTest.expect.equality(mp.line_before_trigger('hello', '/'), 'hello')
+end
+
+T['math_parser']['clear_region_for_expr clears expr and trigger when both present'] = function()
+  local mp = require 'latex-tools.math_parser'
+  local region = mp.clear_region_for_expr({ 0, 6 }, 'hello', '/', 'hello/')
+  MiniTest.expect.equality(region.from[1], 0)
+  MiniTest.expect.equality(region.from[2], 0)
+  MiniTest.expect.equality(region.to[1], 0)
+  MiniTest.expect.equality(region.to[2], 6)
+end
+
+T['math_parser']['clear_region_for_expr clears expr only when trigger not in line'] = function()
+  local mp = require 'latex-tools.math_parser'
+  local region = mp.clear_region_for_expr({ 0, 5 }, 'hello', '/', 'hello')
+  MiniTest.expect.equality(region.from[2], 0)
+  MiniTest.expect.equality(region.to[2], 5)
 end
 
 T['math_parser']['get_previous_expression extracts word with subscript suffix'] = function()
