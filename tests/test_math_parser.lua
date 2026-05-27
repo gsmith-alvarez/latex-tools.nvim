@@ -23,6 +23,24 @@ T['math_parser']['get_previous_expression extracts simple variable'] = function(
   MiniTest.expect.equality(e, 1)
 end
 
+T['math_parser']['get_previous_expression extracts contiguous word'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_previous_expression('velocity')
+  MiniTest.expect.equality(expr, 'velocity')
+  MiniTest.expect.equality(s, 1)
+  MiniTest.expect.equality(e, 8)
+end
+
+T['math_parser']['get_previous_expression extracts word with subscript suffix'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_previous_expression('Mu_Z')
+  MiniTest.expect.equality(expr, 'Mu_Z')
+  MiniTest.expect.equality(s, 1)
+  MiniTest.expect.equality(e, 4)
+end
+
 T['math_parser']['get_previous_expression extracts last brace group of frac'] = function()
   local mp = require 'latex-tools.math_parser'
   -- get_previous_expression sees only the last balanced group: {b} at positions 9-11
