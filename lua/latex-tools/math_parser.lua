@@ -48,6 +48,13 @@ local function is_alpha(char)
   return char:match '[A-Za-z]' ~= nil
 end
 
+--- Check if token text is a plain word character
+---@param text string
+---@return boolean
+local function is_word_token(text)
+  return #text == 1 and text:match '[A-Za-z0-9]' ~= nil
+end
+
 --- Read a comment token starting at position `start`
 --- Comments begin with % and extend to end of line (or string)
 ---@param str string
@@ -299,6 +306,11 @@ local function get_expression_from_tokens(tokens)
     -- Now idx points at the base variable/command
     if idx >= 1 then
       start_idx = idx
+
+      -- Include contiguous plain-word prefix (e.g. Mu_Z, velocity, x1)
+      while start_idx > 1 and is_word_token(tokens[start_idx].text) and is_word_token(tokens[start_idx - 1].text) do
+        start_idx = start_idx - 1
+      end
     end
   end
 
