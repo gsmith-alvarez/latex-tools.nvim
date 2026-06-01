@@ -226,6 +226,70 @@ local function is_script_operator(token)
   return token.text == '_' or token.text == '^'
 end
 
+--- Check if token text is a digit-only run
+---@param token MathToken
+---@return boolean
+local function is_digit_token(token)
+  return token.text:match('^%d+$') ~= nil
+end
+
+--- Extend start_idx backward to include a full decimal literal (e.g. 17.3, -0.5)
+---@param tokens MathToken[]
+---@param start_idx number
+---@param end_idx number
+---@return number
+local function extend_start_for_numeric_literal(tokens, start_idx, end_idx)
+  if start_idx == 0 or start_idx > end_idx then
+    return start_idx
+  end
+
+  if not is_digit_token(tokens[end_idx]) then
+    return start_idx
+  end
+
+  local idx = start_idx
+
+  if idx > 2 and tokens[idx - 1].text == '.' and is_digit_token(tokens[idx - 2]) then
+    idx = idx - 2
+  elseif idx > 1 and tokens[idx].text == '.' and is_digit_token(tokens[idx - 1]) then
+    idx = idx - 1
+  end
+
+  if idx > 1 and tokens[idx - 1].text == '-' then
+    idx = idx - 1
+  end
+
+  return idx
+end
+
+local INVALID_FRACTION_NUMERATOR = {
+  ['{'] = true,
+  ['}'] = true,
+  ['^'] = true,
+  ['_'] = true,
+}
+
+--- Reject numerators that cannot be placed in \\frac{}{}
+---@param expr string
+---@return boolean
+local function is_valid_fraction_numerator(expr)
+  if expr == '' or INVALID_FRACTION_NUMERATOR[expr] then
+    return false
+  end
+
+  local opens = 0
+  for i = 1, #expr do
+    local c = expr:sub(i, i)
+    if c == '{' then
+      opens = opens + 1
+    elseif c == '}' then
+      opens = opens - 1
+    end
+  end
+
+  return opens == 0
+end
+
 --- Walk tokens backward from `end_idx` to find the start of a balanced group
 --- Returns the index of the opening bracket that matches the closing bracket at end_idx
 ---@param tokens MathToken[]
@@ -340,6 +404,8 @@ local function get_expression_from_tokens(tokens)
     end
   end
 
+  start_idx = extend_start_for_numeric_literal(tokens, start_idx, end_idx)
+
   -- Build the expression text from start_idx to end_idx
   local parts = {}
   for i = start_idx, end_idx do
@@ -382,9 +448,10 @@ function M.get_previous_expression(str)
   return expr_text, char_start, char_end
 end
 
---- Numerator text for the smart `/` → `\frac` autosnippet: the contiguous
---- non-whitespace run immediately before the trigger. When that run starts at
---- column 1, a leading `$` or `$$` (markdown math delimiters) is not captured.
+--- Numerator text for the smart `/` → `\frac` autosnippet: the logical
+--- expression immediately before the trigger (tokenizer-backed; respects
+--- balanced `{}`, scripts, and commands). When the capture starts at column 1,
+--- a leading `$` or `$$` (markdown math delimiters) is not included.
 ---@param str string text before the `/` trigger
 ---@return string expression
 ---@return number char_start 1-indexed start in `str`
@@ -394,12 +461,19 @@ function M.get_fraction_numerator(str)
     return '', 0, 0
   end
 
-  local expr = str:match('(%S+)$')
-  if not expr or expr == '' then
+  local tokens = M.tokenize(str)
+  if #tokens == 0 then
     return '', 0, 0
   end
 
-  local char_start = #str - #expr + 1
+  local start_idx, end_idx, expr = get_expression_from_tokens(tokens)
+  if start_idx == 0 then
+    return '', 0, 0
+  end
+
+  local char_start = tokens[start_idx].start
+  local char_end = tokens[end_idx].finish
+
   if char_start == 1 then
     if expr:sub(1, 2) == '$$' then
       expr = expr:sub(3)
@@ -410,11 +484,11 @@ function M.get_fraction_numerator(str)
     end
   end
 
-  if expr == '' then
+  if not is_valid_fraction_numerator(expr) then
     return '', 0, 0
   end
 
-  return expr, char_start, #str
+  return expr, char_start, char_end
 end
 
 --- Text before an autosnippet trigger for smart capture.

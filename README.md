@@ -74,7 +74,7 @@ With default config, these snippets fire automatically:
 | Plain text | `dm` | `$$\n·\n$$` (display math) |
 | Math zone | `beg` | `\begin{·}\n\n\end{·}` |
 | Math zone | `@a` | `\alpha` |
-| Math zone | `/` | `\frac{expr}{·}` (smart fraction — wraps preceding expr) |
+| Math zone | `/` | `\frac{expr}{·}` (smart fraction — wraps preceding expr; inside `{…}` e.g. `x^{1/4}` captures only the in-group prefix → `\frac{1}{4}`) |
 | Math zone | `xhat` | `\hat{x}` (smart postfix) |
 | Math zone | `3*3pmat` | 3×3 `pmatrix` with a tab stop in every cell (dynamic matrix) |
 | Matrix env | `,,` | ` & ` (column separator) |

@@ -61,6 +61,47 @@ T['math_parser']['get_fraction_numerator strips leading math delimiters at line 
   MiniTest.expect.equality(e, 3)
 end
 
+T['math_parser']['get_fraction_numerator captures inside brace groups only'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('x^{1')
+  MiniTest.expect.equality(expr, '1')
+  MiniTest.expect.equality(s, 4)
+  MiniTest.expect.equality(e, 4)
+
+  expr, s, e = mp.get_fraction_numerator('x^{10')
+  MiniTest.expect.equality(expr, '10')
+  MiniTest.expect.equality(s, 4)
+  MiniTest.expect.equality(e, 5)
+end
+
+T['math_parser']['get_fraction_numerator captures denominator prefix in nested frac'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('\\frac{a}{b')
+  MiniTest.expect.equality(expr, 'b')
+  MiniTest.expect.equality(s, 10)
+  MiniTest.expect.equality(e, 10)
+end
+
+T['math_parser']['get_fraction_numerator rejects unbalanced brace capture'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('x^{')
+  MiniTest.expect.equality(expr, '')
+  MiniTest.expect.equality(s, 0)
+  MiniTest.expect.equality(e, 0)
+end
+
+T['math_parser']['get_fraction_numerator keeps decimal literals intact'] = function()
+  local mp = require 'latex-tools.math_parser'
+
+  local expr, s, e = mp.get_fraction_numerator('17.3')
+  MiniTest.expect.equality(expr, '17.3')
+  MiniTest.expect.equality(s, 1)
+  MiniTest.expect.equality(e, 4)
+end
+
 T['math_parser']['get_previous_expression extracts contiguous word'] = function()
   local mp = require 'latex-tools.math_parser'
 

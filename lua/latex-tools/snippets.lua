@@ -351,7 +351,8 @@ function M.register(config)
     sa({ trig = 'sq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt{{ {} }}{}]], { i(1), i(2) })),
     sa({ trig = 'nsq', wordTrig = false, condition = in_mathzone }, fmt([[\sqrt[{}]{{{}}}{}]], { i(1, 'n'), i(2), i(3) })),
     -- [060b] Smart Auto-capture Fraction (mA)
-    -- Uses tokenizer to properly handle balanced parens, brackets, and LaTeX commands
+    -- Tokenizer-backed capture: balanced (), [], {}, scripts, commands, decimals.
+    -- Inside {...} (e.g. x^{1/4}) only the in-group prefix is captured → \frac{1}{4}.
     -- Examples: x/ → \frac{x}{}, (a+b)/ → \frac{a+b}{}, \alpha/ → \frac{\alpha}{}
     sa(
       {
