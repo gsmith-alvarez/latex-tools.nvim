@@ -57,11 +57,32 @@ local TS_MATH_NODES = {
   inline_math_env = true,
 }
 
---- Text commands that escape back to text mode inside LaTeX math.
+--- Text commands that escape back to text mode inside LaTeX math (not math fonts).
 local LATEX_TEXT_CMDS = {
-  bf = true, it = true, rm = true, sf = true, tt = true,
+  text = true, intertext = true, mbox = true, textrm = true, texttt = true,
+  textbf = true, textit = true, textsc = true, textsl = true, textup = true,
+  textmd = true, normalfont = true,
+  bf = true, it = true, sf = true, tt = true,
   sc = true, sl = true, up = true, md = true, normal = true,
 }
+
+--- Command names for _text_escape_fallback (each becomes \name{ in the buffer).
+local TEXT_CMD_NAMES = {
+  'text', 'intertext', 'mbox', 'textrm', 'texttt', 'textbf', 'textit',
+  'textsc', 'textsl', 'textup', 'textmd', 'normalfont',
+}
+
+--- Module config (set from init.lua setup).
+M._use_treesitter = true
+
+--- Apply context options from plugin setup.
+---@param opts table|nil { use_treesitter?: boolean }
+function M.configure(opts)
+  opts = opts or {}
+  if opts.use_treesitter ~= nil then
+    M._use_treesitter = opts.use_treesitter
+  end
+end
 
 --- Matrix/tabular-style environment names.
 --- Exported as M.DEFAULT_MATRIX_ENVS so init.lua can reference this as the
@@ -82,10 +103,41 @@ local MATRIX_ENVS = M.DEFAULT_MATRIX_ENVS
 -- PUBLIC API
 -- =============================================================================
 
+--- True when cursor is inside a LaTeX text-mode command body (e.g. \text{}, \textbf{}).
+--- Only meaningful when is_in_mathzone() is true. Memoized per cursor tick.
+---@return boolean
+function M.is_in_text_escape()
+  if not M.is_in_mathzone() then
+    return false
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local tick = vim.api.nvim_buf_get_changedtick(bufnr)
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local key = cache_key(bufnr, tick, pos[1], pos[2], 'te')
+  if _cache[key] ~= nil then
+    return _cache[key]
+  end
+
+  local result
+  if M._use_treesitter then
+    local ts_result = M._check_text_escape_treesitter()
+    if ts_result == true then
+      result = true
+    else
+      -- nil or false: fallback is authoritative (markdown often lacks LaTeX TS nodes).
+      result = M._text_escape_fallback()
+    end
+  else
+    result = M._text_escape_fallback()
+  end
+
+  cache_insert(key, result)
+  return result
+end
+
 --- Check if cursor is in a math zone.
---- For tex/latex: always returns true (entire file is considered math-capable).
---- Known limitation: \text{...} escapes inside .tex files are not detected;
----   snippets may fire inside \text{} in .tex files.
+--- For tex/latex: entire file is math-capable; use is_in_text_escape() for \text{} bodies.
 --- For markdown*: uses Treesitter + fallback line scanner (result memoized per tick).
 ---@return boolean
 function M.is_in_mathzone()
@@ -168,6 +220,136 @@ end
 ---@return boolean
 function M.is_plain_text()
   return not M.is_in_mathzone() and not M.is_in_code_block()
+end
+
+-- =============================================================================
+-- INTERNAL: TEXT ESCAPE DETECTION
+-- =============================================================================
+
+---@param node userdata
+---@return boolean
+function M._node_has_math_ancestor(node)
+  local p = node:parent()
+  while p do
+    if TS_MATH_NODES[p:type()] then
+      return true
+    end
+    p = p:parent()
+  end
+  return false
+end
+
+---@param cmd_text string
+---@return boolean
+function M._is_text_command_name(cmd_text)
+  if not cmd_text or cmd_text:sub(1, 1) ~= '\\' then
+    return false
+  end
+  local name = cmd_text:match('^\\([%a]+)')
+  if not name then
+    return false
+  end
+  if name == 'mathrm' or name == 'mathbf' or name == 'mathit' or name == 'mathsf'
+    or name == 'mathtt' or name == 'mathsf' or name == 'mathcal' or name == 'mathbb'
+    or name == 'mathfrak' then
+    return false
+  end
+  if LATEX_TEXT_CMDS[name] then
+    return true
+  end
+  if cmd_text:match('^\\text[^a-zA-Z]') or cmd_text:match('^\\intertext') then
+    return true
+  end
+  return false
+end
+
+--- Treesitter: true if cursor is inside a text-mode escape inside math.
+---@return boolean|nil true/false when conclusive, nil to try fallback
+function M._check_text_escape_treesitter()
+  local ok_ts, ts = pcall(require, 'vim.treesitter')
+  if not ok_ts then
+    return nil
+  end
+
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local ok_node, node = pcall(ts.get_node, { pos = { pos[1] - 1, pos[2] } })
+  if not ok_node or not node then
+    return nil
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local cur = node
+
+  while cur do
+    local ntype = cur:type()
+
+    if ntype == 'text_mode' then
+      if M._node_has_math_ancestor(cur) then
+        return true
+      end
+      return nil
+    end
+
+    local parent = cur:parent()
+    if parent and (parent:type() == 'generic_command' or parent:type() == 'command') then
+      local ok_txt, text = pcall(vim.treesitter.get_node_text, parent, bufnr)
+      if ok_txt and text and M._is_text_command_name(text) then
+        if ntype ~= 'generic_command' and ntype ~= 'command' then
+          return true
+        end
+      end
+    end
+
+    cur = parent
+  end
+
+  return false
+end
+
+--- Fallback: brace depth inside \text{} / \textbf{} / … when already in a math zone.
+---@return boolean
+function M._text_escape_fallback()
+  if not M.is_in_mathzone() then
+    return false
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local row, col = pos[1] - 1, pos[2]
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, row + 1, false)
+  if #lines == 0 then
+    return false
+  end
+
+  lines[#lines] = lines[#lines]:sub(1, col)
+  local text = table.concat(lines, '\n')
+
+  local depth = 0
+  local i = 1
+  while i <= #text do
+    local matched = false
+    for _, name in ipairs(TEXT_CMD_NAMES) do
+      local ms, me = text:find('\\' .. name .. '%s*%{', i)
+      if ms and ms == i then
+        depth = depth + 1
+        i = me + 1
+        matched = true
+        break
+      end
+    end
+    if not matched then
+      local ch = text:sub(i, i)
+      if ch == '{' and depth > 0 then
+        depth = depth + 1
+      elseif ch == '}' and depth > 0 then
+        depth = depth - 1
+      end
+      i = i + 1
+    end
+  end
+
+  return depth > 0
 end
 
 -- =============================================================================

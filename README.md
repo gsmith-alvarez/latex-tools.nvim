@@ -165,6 +165,7 @@ require('latex-tools').setup({
   },
 
   context = {
+    -- Improves math-zone detection; also used for \text{} escape detection (with line fallback).
     use_treesitter = true,
   },
 })
@@ -178,7 +179,7 @@ Notable **`matrices`** snippets: the dynamic matrix pattern `(%d+)%*(%d+)([bBpvV
 
 ## Snippet Reference
 
-Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only).
+Snippets fire in **math zones** (inside `$...$`, `$$...$$`, or any `.tex` file) unless marked **text** (plain text only). Inside `\text{...}` / `\textbf{...}` bodies, math autosnippets are suppressed so you can type normal words; `text` and `'` still insert `\text{}` from math mode.
 
 `·` in expansion output marks one **LuaSnip insert / tab stop** in left-to-right order. When you see **`· ·` in a row** (two dots with only spaces or punctuation between them), that is **two different stops**, not one stop drawn twice: you tab through the first, then the second. For many big snippets the **last** stop is a deliberate “jump out” past the closing brace or past the main symbol so you can keep typing without the snippet feeling boxed in.
 

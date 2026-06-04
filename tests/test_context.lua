@@ -195,4 +195,74 @@ T['context']['is_plain_text returns false inside math zone'] = function()
   vim.api.nvim_buf_delete(buf, { force = true })
 end
 
+T['context']['is_in_text_escape false in plain math'] = function()
+  local ctx = require 'latex-tools.context'
+  ctx.clear_cache()
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Text $x + 1$ more' })
+  vim.api.nvim_win_set_cursor(0, { 1, 8 })
+  MiniTest.expect.equality(ctx.is_in_mathzone(), true)
+  MiniTest.expect.equality(ctx.is_in_text_escape(), false)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_text_escape true inside inline text command'] = function()
+  local ctx = require 'latex-tools.context'
+  ctx.clear_cache()
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Eq $\\text{hello}$ end' })
+  vim.api.nvim_win_set_cursor(0, { 1, 12 })
+  MiniTest.expect.equality(ctx.is_in_mathzone(), true)
+  MiniTest.expect.equality(ctx.is_in_text_escape(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_text_escape true inside display math text command'] = function()
+  local ctx = require 'latex-tools.context'
+  ctx.clear_cache()
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    '$$',
+    '\\text{foo}',
+    '$$',
+  })
+  vim.api.nvim_win_set_cursor(0, { 2, 8 })
+  MiniTest.expect.equality(ctx.is_in_mathzone(), true)
+  MiniTest.expect.equality(ctx.is_in_text_escape(), true)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['is_in_text_escape false outside math'] = function()
+  local ctx = require 'latex-tools.context'
+  ctx.clear_cache()
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '\\text{hello}' })
+  vim.api.nvim_win_set_cursor(0, { 1, 8 })
+  MiniTest.expect.equality(ctx.is_in_mathzone(), false)
+  MiniTest.expect.equality(ctx.is_in_text_escape(), false)
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
+T['context']['_text_escape_fallback detects text command body'] = function()
+  local ctx = require 'latex-tools.context'
+  ctx.clear_cache()
+  ctx.configure({ use_treesitter = false })
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+  vim.bo[buf].filetype = 'markdown'
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '$\\text{hello}$' })
+  vim.api.nvim_win_set_cursor(0, { 1, 10 })
+  MiniTest.expect.equality(ctx._text_escape_fallback(), true)
+  ctx.configure({ use_treesitter = true })
+  vim.api.nvim_buf_delete(buf, { force = true })
+end
+
 return T

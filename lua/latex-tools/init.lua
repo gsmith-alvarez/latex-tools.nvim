@@ -131,6 +131,8 @@ function M.setup(opts)
   local config = vim.tbl_deep_extend('force', defaults, opts or {})
   M.config = config
 
+  context.configure(config.context)
+
   register_snippets_if_needed(config)
 
   if config.visual_wrappers.enabled then

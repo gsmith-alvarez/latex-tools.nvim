@@ -114,12 +114,19 @@ Do not merge this into `is_in_matrix_env()` — the distinction is load-bearing 
 
 `mk` / `dm` are registered outside this pipeline for markdown only. Tests: `tests/test_snippets_register.lua`.
 
+### 11. `context.is_in_text_escape()` — suppress autosnippets in `\text{}`
+
+Math autosnippets use `in_mathzone_not_text()` (`is_in_mathzone() and not is_in_text_escape()`). The `\text` / `'` insert snippets keep plain `in_mathzone` so you can still open a text block from math mode.
+
+Detection: Treesitter affirmative only (`text_mode` nested under a math node, or cursor under `\text`/`\textbf`/… command args); otherwise `_text_escape_fallback()` brace-scans `\text{`, `\textbf{`, etc. Markdown `text_mode` at the injection root must **not** return true (see `_node_has_math_ancestor`).
+
 ## Where to look for specific behaviors
 
 | Question | File |
 |---|---|
 | "Why doesn't my snippet fire in `$...$`?" | `context.lua:_check_mathzone_fallback` + `_check_mathzone_markdown` |
-| "How does smart-fraction pick the numerator?" | `math_parser.lua:get_fraction_numerator` (trailing `%S+`, strip leading `$`/`$$` at col 1) + `/` in `snippets.lua` |
+| "How does smart-fraction pick the numerator?" | `math_parser.lua:get_fraction_numerator` (tokenizer-backed) + `/` in `snippets.lua` |
+| "Why do snippets fire inside `\\text{}`?" | Autosnippets use `in_mathzone_not_text`; check `context.is_in_text_escape()` |
 | "Why is `Enter` inserting ` \\ `?" | `matrix.lua:handle_enter` called from `autolist.lua` |
 | "How does `,,` become ` & `?" | `snippets.lua` matrix column snippet (condition: `in_matrix_env`) |
 | "How does `&=` insert `&= \\`?" | `snippets.lua` align shorthand (condition: `in_align_env` from `context.lua`) |
