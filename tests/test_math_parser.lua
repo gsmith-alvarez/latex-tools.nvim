@@ -117,20 +117,33 @@ T['math_parser']['line_before_trigger strips trigger only when present'] = funct
   MiniTest.expect.equality(mp.line_before_trigger('hello', '/'), 'hello')
 end
 
-T['math_parser']['clear_region_for_expr clears expr and trigger when both present'] = function()
+T['math_parser']['clear_region_for_expr clears from char_start through cursor'] = function()
   local mp = require 'latex-tools.math_parser'
-  local region = mp.clear_region_for_expr({ 0, 6 }, 'hello', '/', 'hello/')
+  local region = mp.clear_region_for_expr({ 0, 6 }, 1)
   MiniTest.expect.equality(region.from[1], 0)
   MiniTest.expect.equality(region.from[2], 0)
   MiniTest.expect.equality(region.to[1], 0)
   MiniTest.expect.equality(region.to[2], 6)
 end
 
-T['math_parser']['clear_region_for_expr clears expr only when trigger not in line'] = function()
+T['math_parser']['clear_region_for_expr uses char_start not expr length'] = function()
   local mp = require 'latex-tools.math_parser'
-  local region = mp.clear_region_for_expr({ 0, 5 }, 'hello', '/', 'hello')
+  local region = mp.clear_region_for_expr({ 0, 5 }, 1)
   MiniTest.expect.equality(region.from[2], 0)
   MiniTest.expect.equality(region.to[2], 5)
+end
+
+T['math_parser']['get_fraction_numerator preserves spaces inside text command'] = function()
+  local mp = require 'latex-tools.math_parser'
+  local input = [[\text{Moles of solute}]]
+
+  local expr, s, e = mp.get_fraction_numerator(input)
+  MiniTest.expect.equality(expr, input)
+  MiniTest.expect.equality(s, 1)
+  MiniTest.expect.equality(e, #input)
+
+  local region = mp.clear_region_for_expr({ 0, #input }, s)
+  MiniTest.expect.equality(region.from[2], 0)
 end
 
 T['math_parser']['get_previous_expression extracts word with subscript suffix'] = function()

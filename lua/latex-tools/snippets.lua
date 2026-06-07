@@ -144,7 +144,7 @@ function M.register(config)
       local pos = get_cursor_0ind()
 
       return {
-        clear_region = math_parser.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor),
+        clear_region = math_parser.clear_region_for_expr(pos, char_start),
         env_override = {
           SMART_FRAC_NUMERATOR = expr,
         },
@@ -171,7 +171,7 @@ function M.register(config)
       local pos = get_cursor_0ind()
 
       return {
-        clear_region = math_parser.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor),
+        clear_region = math_parser.clear_region_for_expr(pos, char_start),
         env_override = {
           POSTFIX_MATCH = expr,
         },

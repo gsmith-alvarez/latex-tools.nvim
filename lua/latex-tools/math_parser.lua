@@ -445,7 +445,7 @@ function M.get_previous_expression(str)
   local char_start = tokens[start_idx].start
   local char_end = tokens[end_idx].finish
 
-  return expr_text, char_start, char_end
+  return str:sub(char_start, char_end), char_start, char_end
 end
 
 --- Numerator text for the smart `/` → `\frac` autosnippet: the logical
@@ -466,13 +466,14 @@ function M.get_fraction_numerator(str)
     return '', 0, 0
   end
 
-  local start_idx, end_idx, expr = get_expression_from_tokens(tokens)
+  local start_idx, end_idx, _expr_text = get_expression_from_tokens(tokens)
   if start_idx == 0 then
     return '', 0, 0
   end
 
   local char_start = tokens[start_idx].start
   local char_end = tokens[end_idx].finish
+  local expr = str:sub(char_start, char_end)
 
   if char_start == 1 then
     if expr:sub(1, 2) == '$$' then
@@ -504,21 +505,13 @@ function M.line_before_trigger(line_to_cursor, matched_trigger)
   return line_to_cursor
 end
 
---- 0-indexed `clear_region` for replacing `expr` plus an optional trailing trigger.
---- Mirrors LuaSnip's postfix helper: cursor-relative, not `char_start` from the parser.
+--- 0-indexed `clear_region` from parser `char_start` through cursor (includes trigger).
 ---@param pos number[] 0-indexed { row, col }
----@param expr string captured expression text
----@param matched_trigger string
----@param line_to_cursor string
+---@param char_start number 1-indexed start of expression in text before trigger
 ---@return table clear_region
-function M.clear_region_for_expr(pos, expr, matched_trigger, line_to_cursor)
-  local trigger_at_end = matched_trigger ~= ''
-    and line_to_cursor:sub(-#matched_trigger) == matched_trigger
-  local trigger_len = trigger_at_end and #matched_trigger or 0
-  local clear_from_col = math.max(0, pos[2] - #expr - trigger_len)
-
+function M.clear_region_for_expr(pos, char_start)
   return {
-    from = { pos[1], clear_from_col },
+    from = { pos[1], math.max(0, char_start - 1) },
     to = { pos[1], pos[2] },
   }
 end
